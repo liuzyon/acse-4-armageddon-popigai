@@ -2,3 +2,5 @@
 *.ipynb_checkpoints
 *pycache*
 armageddon/resources
+DamageMapper.ipynb
+ProjectDescription.ipynb
