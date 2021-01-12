@@ -1,5 +1,6 @@
 """Module dealing with postcode information."""
 
+from datetime import date
 import os
 import sys
 
@@ -44,8 +45,8 @@ def great_circle_distance(latlon1, latlon2):
 class PostcodeLocator(object):
     """Class to interact with a postcode database file."""
 
-    def __init__(self, postcode_file='',
-                 census_file='',
+    def __init__(self, postcode_file='./resources/full_postcodes.csv',
+                 census_file='./resources/population_by_postcode_sector.csv',
                  norm=great_circle_distance):
         """
         Parameters
@@ -62,6 +63,8 @@ class PostcodeLocator(object):
             Python function defining the distance between points in latitude-longitude space.
 
         """
+        self.postcode_file = postcode_file
+        self.census_file = census_file
         self.norm = norm
 
 
@@ -73,7 +76,7 @@ class PostcodeLocator(object):
         Parameters
         ----------
         X : arraylike
-            Latitude-longitude pair of centre location 
+            Latitude-longitude pair of centre location(一个圈中心坐标) 
         radii : arraylike
             array of radial distances from X
         sector : bool, optional
@@ -90,10 +93,32 @@ class PostcodeLocator(object):
 
         >>> locator = PostcodeLocator()
         >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.13e3])
-        >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.4e3, 0.2e3], True)                                                                   
+        >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.4e3, 0.2e3], True)                                                                 
         """
+        res = []
+        postcodes_df = pd.read_csv(self.postcode_file, usecols=[0])
+        coordinates_df = pd.read_csv(self.postcode_file, usecols=[2,3])
+        postcodes_df['Postcode'] = postcodes_df['Postcode'].astype(str)
+        coordinates_df['Latitude'] = coordinates_df['Latitude'].astype(float)
+        coordinates_df['Longitude'] = coordinates_df['Longitude'].astype(float)
 
-        return [[]]
+        postcodes_array = postcodes_df.values # 各个unit的数组
+        coodinates_array = coordinates_df.values #各个unit对应的坐标
+
+        distances = self.norm(coodinates_array, X)
+
+        #对每一个半径进行迭代，每次迭代遍历所有邮编区域，看是否在圈中，如果在，加入当前半径对应的postcodes_ra里
+        postcodes_ra = []
+        for ra in radii:
+            postcodes_ra = postcodes_array[distances < ra]
+
+            # for i in len(distances):
+            #     if distances(i) < ra :
+            #         postcodes_ra.append(postcodes_array[i])
+
+            res.append(postcodes_ra)
+
+        return res
 
     def get_population_of_postcode(self, postcodes, sector=False):
         """
@@ -119,5 +144,16 @@ class PostcodeLocator(object):
         >>> locator.get_population_of_postcode([['SW7 2AZ','SW7 2BT','SW7 2BU','SW7 2DD']])
         >>> locator.get_population_of_postcode([['SW7  2']], True)
         """
-
-        return [[]]
+        census = pd.read_csv(self.census_file, usecols=[1, 4])
+        census['geography'] = census['geography'].astype(str)
+        census['Variable: All usual residents; measures: Value'] = census['Variable: All usual residents; measures: Value'].astype(int)
+        # postcodes 里是list的list
+        all_list = []
+        for element in postcodes:
+            if sector:
+                rows_select = census.loc[census['geography'].astype(int).isin(element)]
+                element_list = rows_select['Variable: All usual residents; measures: Value'].values.tolist()
+                all_list.append(element_list)
+            else:
+                pass
+        return all_list
