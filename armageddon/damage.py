@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+import scipy.optimize as sop
 
 def damage_zones(outcome, lat, lon, bearing, pressures):
     """
@@ -9,6 +10,7 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
 
     Parameters
     ----------
+
     outcome: Dict
         the outcome dictionary from an impact scenario
     lat: float
@@ -22,6 +24,7 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
 
     Returns
     -------
+
     blat: float
         latitude of the surface zero point (degrees)
     blon: float
@@ -31,6 +34,7 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
 
     Examples
     --------
+
     >>> import armageddon
     >>> outcome = {'burst_altitude': 8e3, 'burst_energy': 7e3,
                    'burst_distance': 90e3, 'burst_peak_dedz': 1e3,
@@ -41,15 +45,9 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
     # Replace this code with your own. For demonstration we return lat, lon and 1000 m
     blat = lat
     blon = lon
-    damrad = find_r(p, outcome['burst_energy'], outcome['burst_altitude'], pressures)
+    damrad = [5000.] * len(pressures)
 
     return blat, blon, damrad
-
-    sin(phi_2) = sin(phi_1)*cos(r/Rp) + cos(phi_1)*sin(r/Rp)*cos(beta)
-    tan(lambda_2-lambda_1) = sin(beta)*sin(r/Rp)*cos(phi_1)/(cos(r/Rp)-sin(phi_1)*sin(phi_2))
-    # tbc
-    phi_2 = arcsin(sin(phi_2))
-    lambda_2 = arctan(tan(lambda_2-lambda_1)) + lambda_1
 
 
 fiducial_means = {'radius': 10, 'angle': 20, 'strength': 1e6,
