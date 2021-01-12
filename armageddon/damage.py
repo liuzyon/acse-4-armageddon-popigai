@@ -28,7 +28,7 @@ def p(r, E, z, p_target = 0):
     im = (r**2 + z**2) / E**(2/3) # intermediate value
     return 3.14e11 * im**-1.3 + 1.8e7 * im**-0.565 - p_target
 
-def find_r(p, E, z, p_l):
+def find_r_bisect(p, E, z, p_l):
     """
     Return radius for each damage level using bisection method
 
@@ -49,7 +49,7 @@ def find_r(p, E, z, p_l):
     max_p = p(0, E, z)
     return [sop.bisect(p, 0, 1e5, args = (E, z, p_t)) if max_p > p_t else 0.0 for p_t in p_l]
 
-def find_r2(p, E, z, p_l):
+def find_r_newton(p, E, z, p_l):
     """
     Return radius for each damage level using newton method
 
@@ -62,7 +62,7 @@ def find_r2(p, E, z, p_l):
     same as find_r()
     """
 
-    #TODO: find a efficient way to choose a initial guess
+    #TODO: find a efficient way to choose a stable initial guess
     max_p = p(0, E, z)
     return [sop.newton(p, p_t, args = (E, z, p_t)) if max_p > p_t else 0.0 for p_t in p_l]
 
@@ -105,7 +105,7 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
     # Replace this code with your own. For demonstration we return lat, lon and 1000 m
     blat = lat
     blon = lon
-    damrad = find_r(p, outcome['burst_energy'], outcome['burst_altitude'], pressures)
+    damrad = find_r_bisect(p, outcome['burst_energy'], outcome['burst_altitude'], pressures)
 
     return blat, blon, damrad
 
