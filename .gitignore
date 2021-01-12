@@ -2,7 +2,9 @@
 *.ipynb_checkpoints
 *pycache*
 armageddon/resources
-
+DamageMapper.ipynb
+ProjectDescription.ipynb
+AirburstSolver.ipynb
 .DS_Store
 .vscode/
 acse4/
