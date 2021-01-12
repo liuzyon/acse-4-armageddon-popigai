@@ -182,4 +182,40 @@ class Planet():
                    'burst_altitude': 0.,
                    'burst_distance': 0.,
                    'burst_energy': 0.}
+
+        # get dedz column as a series
+        dedz = result.loc[:, 'dedz']
+
+        outcome['burst_peak_dedz'] = dedz.max()
+        max_index = dedz.idxmax()
+        burst_altitude = result.loc[max_index, 'altitude']
+        outcome['burst_altitude'] = burst_altitude
+        outcome['burst_distance'] = result.loc[max_index, 'distance']
+
+        burst_mass = result.loc[max_index, 'mass']
+        burst_velocity = result.loc[max_index, 'velocity']
+        init_mass = result.loc[0, 'mass']
+        init_velocity = result.loc[0, 'velocity']
+
+        init_KE = 1/2 * init_mass * init_velocity**2
+        residual_KE = 1/2 * burst_mass * burst_velocity**2
+        KE_loss = init_KE - residual_KE
+
+        if burst_altitude > 5000:
+            outcome['outcome'] = 'Airburst'
+            outcome['burst_energy'] = KE_loss
+        elif 0 < burst_altitude <= 5000:
+            outcome['outcome'] = 'Airburst and cratering'
+            # I assmume burst energy in this region calulated the same way with cratering
+            if KE_loss > residual_KE:
+                outcome['burst_energy'] = KE_loss 
+            else:
+                outcome['burst_energy'] = residual_KE 
+        else:
+            outcome['outcome'] = 'Cratering'
+            if KE_loss > residual_KE:
+                outcome['burst_energy'] = KE_loss
+            else:
+                outcome['burst_energy'] = residual_KE
+
         return outcome
