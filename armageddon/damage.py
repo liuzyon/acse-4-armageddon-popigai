@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+import locator
 
 def damage_zones(outcome, lat, lon, bearing, pressures):
     """
@@ -95,5 +95,40 @@ def impact_risk(planet, means=fiducial_means, stdevs=fiducial_stdevs,
         the associated risk. These should be called ``postcode`` or ``sector``,
         and ``risk``.
     """
+    gaussian_param = {}
+    for key in fiducial_means:
+        gaussian_param[key] = np.random.normal(fiducial_means.get(key), fiducial_stdevs.get(key), nsamples)
     
-    return pd.DataFrame({'sector': '', 'risk': 0}, index=range(1))
+    earth = planet(atmos_func='constant')
+    postcode_all1 = []
+    for i in range(nsamples=100):
+        result = earth.solve_atmospheric_entry(radius=gaussian_param['radius'][i], angle=gaussian_param['angle'][i],
+                                       strength=gaussian_param['strength'][i], density=gaussian_param['density'][i],
+                                       velocity=gaussian_param['velocity'][i]) #all new
+        result = earth.calculate_energy(result)
+        outcome = earth.analyse_outcome(result)
+        blast_lat, blast_lon, damage_rad = damage_zones(outcome, 
+                                                           lat=gaussian_param['lat'][i], lon=gaussian_param['lon'][i], bearing=gaussian_param['bearing'][i],
+                                                           pressures=pressure) #all new
+        locator = locator.PostcodeLocator()
+        postcodes = locator.get_postcodes_by_radius([blast_lat, blast_lon], radii=damage_rad,sector=sector)
+        postcode_all1 += postcodes
+    postcode_all2 = []
+    for item in postcode_all:
+        postcode_all2 += item
+    index = set(postcode_all2)
+    for i in set(postcode_all2):
+        postcode_all2.count(i)
+    probability = {} #key is postcode, value is probability
+    for i in index:
+        probability[i] = postcode_all2.count(i)/ nsamples
+    risk = {}
+    for key in probability:
+        if sector == True:          
+            risk['sector'] = key # sector
+        else:
+            risk['postcode'] = key # postcode
+        # calculate risk
+        risk['risk'] = probability[key] * locator.get_population_of_postcode(key, sector=sector)
+    
+    return pd.DataFrame(risk)

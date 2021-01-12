@@ -68,7 +68,7 @@ def great_circle_distance(latlon1, latlon2):
                     np.sin(item_1[0]) * np.sin(item_2[0]) + np.cos(item_1[0]) * np.cos(item_2[0]) *
                     np.cos(np.abs(item_1[1] - item_2[1]))) * EARTH_RADIUS
     return distance
-
+print(great_circle_distance([[54.0, 0.0], [55, 0.0]], [55, 1.0]))
 class PostcodeLocator(object):
     """Class to interact with a postcode database file."""
 
