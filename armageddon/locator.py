@@ -10,7 +10,7 @@ import pandas as pd
 
 def great_circle_distance(latlon1, latlon2):
     """
-    Calculate the great circle distance (in metres) between pairs of 
+    Calculate the great circle distance (in metres) between pairs of
     points specified as latitude and longitude on a spherical Earth
     (with radius 6371 km).
 
@@ -99,10 +99,10 @@ class PostcodeLocator(object):
 
         # Read the file, Data type conversion and prepare data.
         postcodes_df = pd.read_csv(self.postcode_file, usecols=[0])
-        coordinates_df = pd.read_csv(self.postcode_file, usecols=[2,3])
+        coordinates_df = pd.read_csv(self.postcode_file, usecols=[2, 3])
         
-        postcodes_array = postcodes_df.values # units array
-        coodinates_array = coordinates_df.values #unit coordinates array
+        postcodes_array = postcodes_df.values   # units array
+        coodinates_array = coordinates_df.values    # unit coordinates array
 
         # Calculate the distance for all postcodes.
         distances = self.norm(coodinates_array, X)
@@ -111,7 +111,7 @@ class PostcodeLocator(object):
         # Iterate each radius value in list, each iteration check coordinates of all postcodes.
         # If it's within the circle, add the postcode to the postcodes_ra list for the current radius value.
         for ra in radii:
-            postcodes_ra = postcodes_array[distances[:,0] < ra]
+            postcodes_ra = postcodes_array[distances[:, 0] < ra]
             res.append(postcodes_ra)
 
         return res
@@ -123,7 +123,7 @@ class PostcodeLocator(object):
         Parameters
         ----------
         postcodes : list of lists
-            list of postcode units or postcode sectors 
+            list of postcode units or postcode sectors
         sector : bool, optional
             if true return populations for postcode sectors, otherwise postcode units
 
