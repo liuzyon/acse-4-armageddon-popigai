@@ -67,11 +67,11 @@ def find_r2(p, E, z, p_l):
     return [sop.newton(p, p_t, args = (E, z, p_t)) if max_p > p_t else 0.0 for p_t in p_l]
 
 def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
-    sin(phi_2) = sin(phi_1)*cos(r/Rp) + cos(phi_1)*sin(r/Rp)*cos(beta)
-    tanh(lambda_2-lambda_1) = sin(beta)*sin(r/Rp)*cos(phi_1)/(cos(r/Rp)-sin(phi_1)*sin(phi_2))
-    # tbc
-    phi_2 = asin(sin(phi_2))
-    lambda_2 = atan(tanh(lambda_2-lambda_1)) + lambda_1
+    np.sin(phi_2) = np.sin(phi_1) * np.cos(r/Rp) + np.cos(phi_1) * np.sin(r/Rp) * np.cos(beta)
+    np.tanh(lambda_2-lambda_1) = np.sin(beta) * np.sin(r/Rp) * np.cos(phi_1) / (np.cos(r/Rp) - np.sin(phi_1) * np.sin(phi_2))
+    # to be confirmed
+    phi_2 = asin(np.sin(phi_2))
+    lambda_2 = atan(np.tanh(lambda_2 - lambda_1)) + lambda_1
     return phi_2, lambda_2
 
 
