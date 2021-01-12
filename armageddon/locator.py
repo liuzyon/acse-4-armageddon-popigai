@@ -18,9 +18,9 @@ def great_circle_distance(latlon1, latlon2):
     ----------
 
     latlon1: arraylike
-        latitudes and longitudes of first point (as [n, 2] array for n points)
+        latitudes and longitudes of first point (as [n, 2] array for n points) unit:degree
     latlon2: arraylike
-        latitudes and longitudes of second point (as [m, 2] array for m points)
+        latitudes and longitudes of second point (as [m, 2] array for m points) unit:degree
 
     Returns
     -------
@@ -32,13 +32,40 @@ def great_circle_distance(latlon1, latlon2):
     --------
 
     >>> import numpy
-    >>> fmt = lambda x: numpy.format_float_scientific(x, precision=3)}
-    >>> with numpy.printoptions(formatter={'all', fmt}):
-        print(great_circle_distance([[54.0, 0.0], [55, 0.0]], [55, 1.0]))
-    [1.286e+05 6.378e+04]
+    >>> fmt = lambda x: numpy.format_float_scientific(x, precision=3)
+    >>> with numpy.printoptions(formatter={'all': fmt}): print(great_circle_distance([[54.0, 0.0], [55, 0.0]], [55, 1.0]))
+    [[1.286e+05]
+     [6.378e+04]]
     """
+    # deal with naked list
+    if not isinstance(latlon1[0], list):
+        c = []
+        c.append(latlon1)
+        latlon1 = c  
+    if not isinstance(latlon2[0], list):
+        c = []
+        c.append(latlon2)
+        latlon2 = c
 
+    EARTH_RADIUS = 6371000  # unit is meter
+    # convert to array
+    latlon1 = np.array(latlon1)
+    latlon2 = np.array(latlon2)
+    # convert degree to radians
+    latlon1 = latlon1 * np.pi / 180
+    latlon2 = latlon2 * np.pi / 180
     distance = np.empty((len(latlon1), len(latlon2)), float)
+    for i, item_1 in enumerate(latlon1):
+        for j, item_2 in enumerate(latlon2):
+            if item_1[0] == item_2[0]:
+                # same latitude
+                distance[i][j] = np.abs(item_1[1]-item_2[1]) * EARTH_RADIUS * np.cos(item_1[0])
+            elif item_1[1] == item_2[1]:
+                # same longitude
+                distance[i][j] = np.abs(item_1[0]-item_2[0]) * EARTH_RADIUS
+            else:
+                # law of spherical cosines(through %timeit to check, this method is fastest)
+                distance[i][j] = np.arccos(np.sin(item_1[0])*np.sin(item_2[0])+np.cos(item_1[0])*np.cos(item_2[0])*np.cos(np.abs(item_1[1]-item_2[1]))) * EARTH_RADIUS
     return distance
 
 
