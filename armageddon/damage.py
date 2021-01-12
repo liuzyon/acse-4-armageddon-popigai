@@ -70,8 +70,8 @@ def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
     sin(phi_2) = sin(phi_1)*cos(r/Rp) + cos(phi_1)*sin(r/Rp)*cos(beta)
     tanh(lambda_2-lambda_1) = sin(beta)*sin(r/Rp)*cos(phi_1)/(cos(r/Rp)-sin(phi_1)*sin(phi_2))
     # tbc
-    phi_2 = arcsin(sin(phi_2))
-    lambda_2 = arctan(tanh(lambda_2-lambda_1)) + lambda_1
+    phi_2 = asin(sin(phi_2))
+    lambda_2 = atan(tanh(lambda_2-lambda_1)) + lambda_1
     return phi_2, lambda_2
 
 
@@ -117,13 +117,6 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
     damrad = find_r(p, outcome['burst_energy'], outcome['burst_altitude'], pressures)
 
     return blat, blon, damrad
-
-    sin(phi_2) = sin(phi_1)*cos(r/Rp) + cos(phi_1)*sin(r/Rp)*cos(beta)
-    tan(lambda_2-lambda_1) = sin(beta)*sin(r/Rp)*cos(phi_1)/(cos(r/Rp)-sin(phi_1)*sin(phi_2))
-    # tbc
-    phi_2 = arcsin(sin(phi_2))
-    lambda_2 = arctan(tan(lambda_2-lambda_1)) + lambda_1
-
 
 fiducial_means = {'radius': 10, 'angle': 20, 'strength': 1e6,
                   'density': 3000, 'velocity': 19e3,
