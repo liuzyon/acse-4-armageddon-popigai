@@ -2,16 +2,12 @@
 *.ipynb_checkpoints
 *pycache*
 armageddon/resources
-<<<<<<< HEAD
 DamageMapper.ipynb
 ProjectDescription.ipynb
 AirburstSolver.ipynb
-=======
-
 .DS_Store
 .vscode/
 acse4/
 auxiliary/
 damage_map.html
 Temp.ipynb
->>>>>>> origin/damage_zones
