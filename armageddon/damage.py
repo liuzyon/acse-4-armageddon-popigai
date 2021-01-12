@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+
 def damage_zones(outcome, lat, lon, bearing, pressures):
     """
     Calculate the latitude and longitude of the surface zero location and the
