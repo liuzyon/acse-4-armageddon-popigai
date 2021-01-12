@@ -1,6 +1,80 @@
 import numpy as np
 import pandas as pd
 
+import scipy.optimize as sop
+
+def p(r, E, z, p_target = 0):
+    """
+    The function to estimate r for the target wave pressure
+
+    Parameters
+    ----------
+    r: float
+        horizontal range, in meter
+    E: float
+        explosive energy, in kiloton of TNT
+    z: float
+        burst altitude, in meter
+    p_target: float
+        the target pressure the wish to find r for, = 0 means exact function to original p(r)
+
+    Returns
+    -------
+    pressure: float
+        the pressure under such condition, in Pa
+    """
+    if E == 0.: return 0.
+
+    im = (r**2 + z**2) / E**(2/3) # intermediate value
+    return 3.14e11 * im**-1.3 + 1.8e7 * im**-0.565 - p_target
+
+def find_r(p, E, z, p_l):
+    """
+    Return radius for each damage level using bisection method
+
+    Parameters
+    ----------
+    p: function
+        the function which has root to be found
+    E, z: float
+        same as function p()
+    p_l: array-like
+        the threshold value for each damage levels
+
+    Returns
+    -------
+    radii: array-like
+        a list of radius corresponds to the damage levels provided
+    """
+    max_p = p(0, E, z)
+    return [sop.bisect(p, 0, 1e5, args = (E, z, p_t)) if max_p > p_t else 0.0 for p_t in p_l]
+
+def find_r2(p, E, z, p_l):
+    """
+    Return radius for each damage level using newton method
+
+    Parameters
+    ----------
+    same as find_r()
+
+    Returns
+    -------
+    same as find_r()
+    """
+
+    #TODO: find a efficient way to choose a initial guess
+    max_p = p(0, E, z)
+    return [sop.newton(p, p_t, args = (E, z, p_t)) if max_p > p_t else 0.0 for p_t in p_l]
+
+def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
+    sin(phi_2) = sin(phi_1)*cos(r/Rp) + cos(phi_1)*sin(r/Rp)*cos(beta)
+    tanh(lambda_2-lambda_1) = sin(beta)*sin(r/Rp)*cos(phi_1)/(cos(r/Rp)-sin(phi_1)*sin(phi_2))
+    # tbc
+    phi_2 = arcsin(sin(phi_2))
+    lambda_2 = arctan(tanh(lambda_2-lambda_1)) + lambda_1
+    return phi_2, lambda_2
+
+
 def damage_zones(outcome, lat, lon, bearing, pressures):
     """
     Calculate the latitude and longitude of the surface zero location and the
@@ -8,7 +82,6 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
 
     Parameters
     ----------
-
     outcome: Dict
         the outcome dictionary from an impact scenario
     lat: float
@@ -22,7 +95,6 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
 
     Returns
     -------
-
     blat: float
         latitude of the surface zero point (degrees)
     blon: float
@@ -32,7 +104,6 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
 
     Examples
     --------
-
     >>> import armageddon
     >>> outcome = {'burst_altitude': 8e3, 'burst_energy': 7e3,
                    'burst_distance': 90e3, 'burst_peak_dedz': 1e3,
@@ -43,9 +114,15 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
     # Replace this code with your own. For demonstration we return lat, lon and 1000 m
     blat = lat
     blon = lon
-    damrad = [5000.] * len(pressures)
+    damrad = find_r(p, outcome['burst_energy'], outcome['burst_altitude'], pressures)
 
     return blat, blon, damrad
+
+    sin(phi_2) = sin(phi_1)*cos(r/Rp) + cos(phi_1)*sin(r/Rp)*cos(beta)
+    tan(lambda_2-lambda_1) = sin(beta)*sin(r/Rp)*cos(phi_1)/(cos(r/Rp)-sin(phi_1)*sin(phi_2))
+    # tbc
+    phi_2 = arcsin(sin(phi_2))
+    lambda_2 = arctan(tan(lambda_2-lambda_1)) + lambda_1
 
 
 fiducial_means = {'radius': 10, 'angle': 20, 'strength': 1e6,
