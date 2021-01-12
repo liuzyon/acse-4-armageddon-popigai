@@ -154,7 +154,7 @@ class Planet():
         result = result.copy()
         result.insert(len(result.columns),
                       'dedz', np.array(np.nan))
-
+        result['dedz'] = abs(((1 / 2) * result['mass'] * result['velocity'] ** 2).diff() / (result['altitude'] / 1000).diff())
         return result
 
     def analyse_outcome(self, result):
