@@ -96,26 +96,22 @@ class PostcodeLocator(object):
         >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.4e3, 0.2e3], True)                                                                 
         """
         res = []
+
+        # Read the file, Data type conversion and prepare data.
         postcodes_df = pd.read_csv(self.postcode_file, usecols=[0])
         coordinates_df = pd.read_csv(self.postcode_file, usecols=[2,3])
-        postcodes_df['Postcode'] = postcodes_df['Postcode'].astype(str)
-        coordinates_df['Latitude'] = coordinates_df['Latitude'].astype(float)
-        coordinates_df['Longitude'] = coordinates_df['Longitude'].astype(float)
+        
+        postcodes_array = postcodes_df.values # units array
+        coodinates_array = coordinates_df.values #unit coordinates array
 
-        postcodes_array = postcodes_df.values # 各个unit的数组
-        coodinates_array = coordinates_df.values #各个unit对应的坐标
-
+        # Calculate the distance for all postcodes.
         distances = self.norm(coodinates_array, X)
 
-        #对每一个半径进行迭代，每次迭代遍历所有邮编区域，看是否在圈中，如果在，加入当前半径对应的postcodes_ra里
-        postcodes_ra = []
+
+        # Iterate each radius value in list, each iteration check coordinates of all postcodes.
+        # If it's within the circle, add the postcode to the postcodes_ra list for the current radius value.
         for ra in radii:
-            postcodes_ra = postcodes_array[distances < ra]
-
-            # for i in len(distances):
-            #     if distances(i) < ra :
-            #         postcodes_ra.append(postcodes_array[i])
-
+            postcodes_ra = postcodes_array[distances[:,0] < ra]
             res.append(postcodes_ra)
 
         return res
@@ -145,15 +141,21 @@ class PostcodeLocator(object):
         >>> locator.get_population_of_postcode([['SW7  2']], True)
         """
         census = pd.read_csv(self.census_file, usecols=[1, 4])
-        census['geography'] = census['geography'].astype(str)
-        census['Variable: All usual residents; measures: Value'] = census['Variable: All usual residents; measures: Value'].astype(int)
-        # postcodes 里是list的list
-        all_list = []
-        for element in postcodes:
-            if sector:
-                rows_select = census.loc[census['geography'].astype(int).isin(element)]
-                element_list = rows_select['Variable: All usual residents; measures: Value'].values.tolist()
-                all_list.append(element_list)
-            else:
-                pass
-        return all_list
+        postcodes = pd.read_csv(self.postcode_file, usecols=[0])
+
+        res = []
+        for level in postcodes:
+            level_list = []
+            for postcode in level:
+                if sector:
+                    row_select = census[census['geography'] == postcode]
+                    population = row_select.iloc[0]['Variable: All usual residents; measures: Value']
+                else:
+                    row_select = census[census['geography'] == postcode[0:5]]
+                    population_in_sector = row_select.iloc[0]['Variable: All usual residents; measures: Value']
+                    units_in_sector = postcodes['Postcode'].str.contains(postcode[0:5])
+                    num_units = units_in_sector.shape[0]
+                    population = population_in_sector / num_units
+                level_list.append(population)
+            res.append(level_list)
+        return res
