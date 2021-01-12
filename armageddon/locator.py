@@ -9,7 +9,7 @@ import pandas as pd
 
 def great_circle_distance(latlon1, latlon2):
     """
-    Calculate the great circle distance (in metres) between pairs of 
+    Calculate the great circle distance (in metres) between pairs of
     points specified as latitude and longitude on a spherical Earth
     (with radius 6371 km).
 
@@ -38,13 +38,13 @@ def great_circle_distance(latlon1, latlon2):
     """
     # deal with naked list
     if not isinstance(latlon1[0], list):
-        c = []
-        c.append(latlon1)
-        latlon1 = c  
+        latlon = []
+        latlon.append(latlon1)
+        latlon1 = latlon
     if not isinstance(latlon2[0], list):
-        c = []
-        c.append(latlon2)
-        latlon2 = c
+        latlon = []
+        latlon.append(latlon2)
+        latlon2 = latlon
 
     EARTH_RADIUS = 6371000  # unit is meter
     # convert to array
@@ -58,15 +58,16 @@ def great_circle_distance(latlon1, latlon2):
         for j, item_2 in enumerate(latlon2):
             if item_1[0] == item_2[0]:
                 # same latitude
-                distance[i][j] = np.abs(item_1[1]-item_2[1]) * EARTH_RADIUS * np.cos(item_1[0])
+                distance[i][j] = np.abs(item_1[1] - item_2[1]) * EARTH_RADIUS * np.cos(item_1[0])
             elif item_1[1] == item_2[1]:
                 # same longitude
-                distance[i][j] = np.abs(item_1[0]-item_2[0]) * EARTH_RADIUS
+                distance[i][j] = np.abs(item_1[0] - item_2[0]) * EARTH_RADIUS
             else:
                 # law of spherical cosines(through %timeit to check, this method is fastest)
-                distance[i][j] = np.arccos(np.sin(item_1[0])*np.sin(item_2[0])+np.cos(item_1[0])*np.cos(item_2[0])*np.cos(np.abs(item_1[1]-item_2[1]))) * EARTH_RADIUS
+                distance[i][j] = np.arccos(
+                    np.sin(item_1[0]) * np.sin(item_2[0]) + np.cos(item_1[0]) * np.cos(item_2[0]) *
+                    np.cos(np.abs(item_1[1] - item_2[1]))) * EARTH_RADIUS
     return distance
-
 
 class PostcodeLocator(object):
     """Class to interact with a postcode database file."""
@@ -90,7 +91,6 @@ class PostcodeLocator(object):
 
         """
         self.norm = norm
-
 
     def get_postcodes_by_radius(self, X, radii, sector=False):
         """
