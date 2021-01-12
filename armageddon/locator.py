@@ -139,6 +139,7 @@ class PostcodeLocator(object):
         >>> locator = PostcodeLocator()
         >>> locator.get_population_of_postcode([['SW7 2AZ','SW7 2BT','SW7 2BU','SW7 2DD']])
         >>> locator.get_population_of_postcode([['SW7  2']], True)
+        [[2283]]
         """
         census = pd.read_csv(self.census_file, usecols=[1, 4])
         postcodes = pd.read_csv(self.postcode_file, usecols=[0])
@@ -149,13 +150,16 @@ class PostcodeLocator(object):
             for postcode in level:
                 if sector:
                     row_select = census[census['geography'] == postcode]
-                    population = row_select.iloc[0]['Variable: All usual residents; measures: Value']
+                    population = row_select.iloc[0]['Variable: All usual residents; measures: Value'] if row_select.shape[0] > 0 else 0
                 else:
                     row_select = census[census['geography'] == postcode[0:5]]
-                    population_in_sector = row_select.iloc[0]['Variable: All usual residents; measures: Value']
-                    units_in_sector = postcodes['Postcode'].str.contains(postcode[0:5])
-                    num_units = units_in_sector.shape[0]
-                    population = population_in_sector / num_units
+                    if row_select.shape[0] > 0:
+                        population_in_sector = row_select.iloc[0]['Variable: All usual residents; measures: Value']
+                        units_in_sector = postcodes['Postcode'].str.contains(postcode[0:5])
+                        num_units = units_in_sector.shape[0]
+                        population = population_in_sector / num_units
+                    else:
+                        population = 0
                 level_list.append(population)
             res.append(level_list)
         return res
