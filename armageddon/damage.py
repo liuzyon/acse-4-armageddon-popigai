@@ -66,6 +66,15 @@ def find_r_newton(p, E, z, p_l):
     max_p = p(0, E, z)
     return [sop.newton(p, p_t, args = (E, z, p_t)) if max_p > p_t else 0.0 for p_t in p_l]
 
+def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
+    np.sin(phi_2) = np.sin(phi_1) * np.cos(r/Rp) + np.cos(phi_1) * np.sin(r/Rp) * np.cos(beta)
+    np.tanh(lambda_2-lambda_1) = np.sin(beta) * np.sin(r/Rp) * np.cos(phi_1) / (np.cos(r/Rp) - np.sin(phi_1) * np.sin(phi_2))
+    # to be confirmed
+    phi_2 = asin(np.sin(phi_2))
+    lambda_2 = atan(np.tanh(lambda_2 - lambda_1)) + lambda_1
+    return phi_2, lambda_2
+
+
 def damage_zones(outcome, lat, lon, bearing, pressures):
     """
     Calculate the latitude and longitude of the surface zero location and the
@@ -108,13 +117,6 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
     damrad = find_r_bisect(p, outcome['burst_energy'], outcome['burst_altitude'], pressures)
 
     return blat, blon, damrad
-
-    sin(phi_2) = sin(phi_1)*cos(r/Rp) + cos(phi_1)*sin(r/Rp)*cos(beta)
-    tan(lambda_2-lambda_1) = sin(beta)*sin(r/Rp)*cos(phi_1)/(cos(r/Rp)-sin(phi_1)*sin(phi_2))
-    # tbc
-    phi_2 = arcsin(sin(phi_2))
-    lambda_2 = arctan(tan(lambda_2-lambda_1)) + lambda_1
-
 
 fiducial_means = {'radius': 10, 'angle': 20, 'strength': 1e6,
                   'density': 3000, 'velocity': 19e3,
