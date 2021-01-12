@@ -66,6 +66,15 @@ def find_r2(p, E, z, p_l):
     max_p = p(0, E, z)
     return [sop.newton(p, p_t, args = (E, z, p_t)) if max_p > p_t else 0.0 for p_t in p_l]
 
+def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
+    sin(phi_2) = sin(phi_1)*cos(r/Rp) + cos(phi_1)*sin(r/Rp)*cos(beta)
+    tanh(lambda_2-lambda_1) = sin(beta)*sin(r/Rp)*cos(phi_1)/(cos(r/Rp)-sin(phi_1)*sin(phi_2))
+    # tbc
+    phi_2 = arcsin(sin(phi_2))
+    lambda_2 = arctan(tanh(lambda_2-lambda_1)) + lambda_1
+    return phi_2, lambda_2
+
+
 def damage_zones(outcome, lat, lon, bearing, pressures):
     """
     Calculate the latitude and longitude of the surface zero location and the
