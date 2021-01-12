@@ -154,7 +154,7 @@ class Planet():
         result = result.copy()
         result.insert(len(result.columns),
                       'dedz', np.array(np.nan))
-
+        result['dedz'] = abs(((1 / 2) * result['mass'] * result['velocity'] ** 2).diff() / (result['altitude'] / 1000).diff())
         return result
 
     def analyse_outcome(self, result):
@@ -184,7 +184,7 @@ class Planet():
                    'burst_energy': 0.}
 
         # get dedz column as a series
-        dedz = result.loc[:, 'dedz']
+        dedz = result.iloc[:, -1]
 
         outcome['burst_peak_dedz'] = dedz.max()
         max_index = dedz.idxmax()
