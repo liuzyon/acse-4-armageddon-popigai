@@ -186,6 +186,7 @@ class Planet():
         # get dedz column as a series
         dedz = result.iloc[:, -1]
         outcome['burst_peak_dedz'] = dedz.max()
+        
         # get the index of max dedz
         max_index = dedz.idxmax()
         outcome['burst_distance'] = result.loc[max_index, 'distance']
@@ -193,9 +194,9 @@ class Planet():
         outcome['burst_altitude'] = burst_altitude
         burst_mass = result.loc[max_index, 'mass']
         burst_velocity = result.loc[max_index, 'velocity']
+
         init_mass = result.loc[0, 'mass']
         init_velocity = result.loc[0, 'velocity']
-
         init_KE = 1/2 * init_mass * init_velocity**2 / (4.184e12)
         residual_KE = 1/2 * burst_mass * burst_velocity**2 / (4.184e12)
         KE_loss = init_KE - residual_KE
