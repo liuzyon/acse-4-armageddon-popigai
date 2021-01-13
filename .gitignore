@@ -10,4 +10,5 @@ armageddon/resources
 acse4/
 armageddon/dev.py
 auxiliary/
+example.py
 damage_map.html
