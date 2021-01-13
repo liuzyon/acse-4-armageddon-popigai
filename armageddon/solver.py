@@ -216,8 +216,6 @@ class Planet():
         # Replace these lines with your code to add the dedz column to
         # the result DataFrame
         result = result.copy()
-        result.insert(len(result.columns),
-                      'dedz', np.array(np.nan))
         result['dedz'] = abs(((1 / 2) * result['mass'] * result['velocity'] ** 2).diff() / (result['altitude'] / 1000).diff()) / (4.184e12)
         return result
 
@@ -278,3 +276,4 @@ class Planet():
             else:
                 outcome['outcome'] = 'Airburst and cratering'
         return outcome
+
