@@ -2,12 +2,10 @@
 *.ipynb_checkpoints
 *pycache*
 
-*.ipynb
 
 .DS_Store
 .pytest_cache/
 acse4/
 armageddon/dev.py
 auxiliary/
-example.py
 damage_map.html
