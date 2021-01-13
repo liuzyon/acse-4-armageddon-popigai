@@ -247,7 +247,6 @@ class Planet():
 
         # Replace these lines with your code to add the dedz column to
         # the result DataFrame
-        result = result.copy()
         result['dedz'] = abs(((1 / 2) * result['mass'] * result['velocity']
                               ** 2).diff() / (result['altitude'] / 1000).diff()) / (4.184e12)
         return result
@@ -280,7 +279,9 @@ class Planet():
                    'burst_energy': 0.}
 
         # get dedz column as a series
-        dedz = result.iloc[:, -1]
+        dedz = result.loc[:, 'dedz']
+        if dedz.empty is True:
+            return outcome
         outcome['burst_peak_dedz'] = dedz.max()
 
         # get the index of max dedz
