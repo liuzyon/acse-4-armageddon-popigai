@@ -3,68 +3,120 @@ import pandas as pd
 
 import scipy.optimize as sop
 
-def p(r, E, z, p_target = 0):
+
+def p(r, E, z, p_t=0):
     """
-    The function to estimate r for the target wave pressure
+    The exact function to evaluate pressure at given radius, burst energy
+    and burst altitude
 
     Parameters
     ----------
-    r: float
-        horizontal range, in meter
+    r: array-like, float
+        surface distance from surface zero location, in meter
     E: float
-        explosive energy, in kiloton of TNT
+        explosive/burst energy, in kiloton of TNT
     z: float
         burst altitude, in meter
-    p_target: float
-        the target pressure the wish to find r for, = 0 means exact function to original p(r)
+    p_t: float
+        the target pressure that wish to find r for,
+        =0 means exact function for p(r, E, z)
 
     Returns
     -------
     pressure: float
-        the pressure under such condition, in Pa
+        the pressure under given conditions, in Pa
     """
-    if E == 0.: return 0.
+    im = (r**2 + z**2) / E**(2/3)  # intermediate value
+    return 3.14e11 * im**-1.3 + 1.8e7 * im**-0.565 - p_t
 
-    im = (r**2 + z**2) / E**(2/3) # intermediate value
-    return 3.14e11 * im**-1.3 + 1.8e7 * im**-0.565 - p_target
 
-def find_r_bisect(p, E, z, p_l):
+def bisection(a, b, E, z, p_t, atol=1e-6, max_iter=100):
     """
-    Return radius for each damage level using bisection method
+    Implement the bisection root-finding method on p()
 
     Parameters
     ----------
-    p: function
-        the function which has root to be found
+    a, b are the initial interval
+    E, z, p_t are the same as p()
+    atol is a stopping tolerance
+    max_iter is the maximum number of iterations allowed
+
+    Returns
+    -------
+    the final estimate of the root
+    """
+    # ensure a and b has different sign
+    d_ab = np.abs(b - a)
+    while np.sign(p(a, E, z, p_t)) == np.sign(p(b, E, z, p_t)):
+        a += d_ab
+        b += d_ab
+
+    n = 0
+    while n <= max_iter:
+        c = (a+b) / 2.
+        p_c = p(c, E, z, p_t)
+
+        if p_c == 0. or (b-a)/2. < atol:
+            return c
+        n += 1
+
+        if np.sign(p_c) == np.sign(p(a, E, z, p_t)):
+            a = c
+        else:
+            b = c
+
+    raise RuntimeError('Hit maximum number of iterations with no root found')
+
+
+def find_r_bisect(E, z, p_l):
+    """
+    Return radius for each input damage level using bisection method
+
+    Parameters
+    ----------
     E, z: float
         same as function p()
-    p_l: array-like
-        the threshold value for each damage levels
+    p_l: array-like, float
+        the threshold value for each inspecting damage level
 
     Returns
     -------
-    radii: array-like
-        a list of radius corresponds to the damage levels provided
+    radii: array-like, float
+        a list of radius or one radius corresponds to the provided levels
+        depends on the input p_l is an array or a float
     """
-    max_p = p(0, E, z)
-    return [sop.bisect(p, 0, 1e5, args = (E, z, p_t)) if max_p > p_t else 0.0 for p_t in p_l]
+    # parse and check input parameters
+    try:
+        E = float(E)
+    except ValueError:
+        print('E must be a number')
+    assert E >= 0, 'burst energy cannot be negative'
 
-def find_r_newton(p, E, z, p_l):
-    """
-    Return radius for each damage level using newton method
+    try:
+        z = float(z)
+    except ValueError:
+        print('z must be a number')
+    assert z >= 0, 'burst altitude cannot be negative'
 
-    Parameters
-    ----------
-    same as find_r()
+    # define constant
+    min_r = 1e-6
+    dr = 2**15
 
-    Returns
-    -------
-    same as find_r()
-    """
+    rtn_l = np.zeros_like(p_l, dtype=float)
+    max_p = p(min_r, E, z)
 
-    #TODO: find a efficient way to choose a stable initial guess
-    max_p = p(0, E, z)
-    return [sop.newton(p, p_t, args = (E, z, p_t)) if max_p > p_t else 0.0 for p_t in p_l]
+    # if energy is zero, all impact radii is zero
+    if E > 0:
+        for i, p_t in enumerate(p_l):
+            if max_p >= p_t:
+                rtn_l[i] = bisection(p, min_r, min_r+dr, E, z, p_t)
+
+    # return an array or a float depends on the length of rtn_l
+    if len(rtn_l) == 1:
+        return rtn_l[0]
+    else:
+        return rtn_l
+
 
 def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
     np.sin(phi_2) = np.sin(phi_1) * np.cos(r/Rp) + np.cos(phi_1) * np.sin(r/Rp) * np.cos(beta)
@@ -89,7 +141,7 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
     lon: float
         longitude of the meteoroid entry point (degrees)
     bearing: float
-        Bearing (azimuth) relative to north of meteoroid trajectory (degrees) 
+        Bearing (azimuth) relative to north of meteoroid trajectory (degrees)
     pressures: float, arraylike
         List of threshold pressures to define airblast damage levels
 
@@ -100,7 +152,7 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
     blon: float
         longitude of the surface zero point (degrees)
     damrad: arraylike, float
-        List of distances specifying the blast radii for the input damage levels
+        List of or one blast radius for the input damage levels
 
     Examples
     --------
@@ -108,15 +160,18 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
     >>> outcome = {'burst_altitude': 8e3, 'burst_energy': 7e3,
                    'burst_distance': 90e3, 'burst_peak_dedz': 1e3,
                    'outcome': 'Airburst'}
-    >>> armageddon.damage_zones(outcome, 52.79, -2.95, 135, pressures=[1e3, 3.5e3, 27e3, 43e3])
+    >>> armageddon.damage_zones(outcome, 52.79, -2.95, 135,
+                                pressures=[1e3, 3.5e3, 27e3, 43e3])
     """
 
-    # Replace this code with your own. For demonstration we return lat, lon and 1000 m
     blat = lat
     blon = lon
-    damrad = find_r_bisect(p, outcome['burst_energy'], outcome['burst_altitude'], pressures)
+    damrad = find_r_bisect(outcome['burst_energy'],
+                           outcome['burst_altitude'],
+                           pressures)
 
     return blat, blon, damrad
+
 
 fiducial_means = {'radius': 10, 'angle': 20, 'strength': 1e6,
                   'density': 3000, 'velocity': 19e3,
@@ -164,5 +219,5 @@ def impact_risk(planet, means=fiducial_means, stdevs=fiducial_stdevs,
         the associated risk. These should be called ``postcode`` or ``sector``,
         and ``risk``.
     """
-    
+
     return pd.DataFrame({'sector': '', 'risk': 0}, index=range(1))
