@@ -1,4 +1,3 @@
-
 from collections import OrderedDict
 import pandas as pd
 import numpy as np
@@ -22,7 +21,10 @@ def planet(armageddon):
 
 @fixture(scope='module')
 def loc(armageddon):
-    return armageddon.PostcodeLocator()
+    return armageddon.PostcodeLocator(
+        postcode_file='armageddon/resources/full_postcodes.csv',
+        census_file='armageddon/resources/population_by_postcode_sector.csv'
+    )
 
 
 @fixture(scope='module')
@@ -58,10 +60,10 @@ def test_planet_signature(armageddon):
                          g=9.81, H=8000., rho0=1.2)
 
     # call by keyword
-    planet = armageddon.Planet(**inputs)
+    armageddon.Planet(**inputs)
 
     # call by position
-    planet = armageddon.Planet(*inputs.values())
+    armageddon.Planet(*inputs.values())
 
 
 def test_attributes(planet):
@@ -151,8 +153,8 @@ def test_damage_zones(armageddon):
     blat, blon, damrad = armageddon.damage_zones(
         outcome, 55.0, 0., 135., [27e3, 43e3])
 
-    assert type(blat) is float
-    assert type(blon) is float
+    assert type(blat) is np.float64
+    assert type(blon) is np.float64
     assert type(damrad) is list
     assert len(damrad) == 2
 
