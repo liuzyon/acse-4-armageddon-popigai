@@ -6,8 +6,8 @@
 
 .DS_Store
 .pytest_cache/
-.vscode/
 acse4/
 armageddon/dev.py
 auxiliary/
+example.py
 damage_map.html
