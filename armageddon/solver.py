@@ -8,6 +8,7 @@ Created on Wed Jan 13 01:13:54 2021
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 class Planet():
@@ -84,10 +85,9 @@ class Planet():
             raise NotImplementedError(
                 "atmos_func must be 'exponential', 'tabular' or 'constant'")
 
-
     def solve_atmospheric_entry(
             self, radius, velocity, density, strength, angle,
-            init_altitude=100000, dt=0.05, radians=False):
+            init_altitude=100e3, dt=0.05, radians=False):
         """
         Solve the system of differential equations for a given impact scenario
 
@@ -131,35 +131,28 @@ class Planet():
             'distance', 'radius', 'time'
         """
 
-
         # Enter your code here to solve the differential equations
-        #角度制转弧度制
-        if radians == True:
+        # 角度制转弧度制
+        if radians:
             theta0 = angle
         else:
             theta0 = angle * np.pi / 180
-        
-        
-        
-        
-        mass = 4/3*density*np.pi*radius**3
+
+        mass = 4 / 3 * density * np.pi * radius**3
         t0 = 0
-        vmtzxr0 = np.array([velocity, mass, theta0, init_altitude, 0, radius])        
-        vmtzxrs_Rk4, t_all = self.Rk4(self.f, vmtzxr0, t0, dt, strength, density)
-        #analytic
-        #vmtzxrs_Rk4, t_all = self.Rk4(self.f_analy, vmtzxr0, t0, dt, strength, density)
+        vmtzxr0 = np.array([velocity, mass, theta0, init_altitude, 0, radius])
+        vmtzxrs_Rk4, t_all = self.Rk4(
+            self.f, vmtzxr0, t0, dt, strength, density)
+        # analytic
+        # vmtzxrs_Rk4, t_all = self.Rk4(self.f_analy, vmtzxr0, t0, dt, strength, density)
 
-
-
-        return pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1,0],
-                             'mass': vmtzxrs_Rk4[:-1,1],
-                             'angle': vmtzxrs_Rk4[:-1,2],
-                             'altitude': vmtzxrs_Rk4[:-1,3],
-                             'distance': vmtzxrs_Rk4[:-1,4],
-                             'radius': vmtzxrs_Rk4[:-1,5],
+        return pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1, 0],
+                             'mass': vmtzxrs_Rk4[:-1, 1],
+                             'angle': vmtzxrs_Rk4[:-1, 2],
+                             'altitude': vmtzxrs_Rk4[:-1, 3],
+                             'distance': vmtzxrs_Rk4[:-1, 4],
+                             'radius': vmtzxrs_Rk4[:-1, 5],
                              'time': t_all[:-1]})
-            
-
 
     def Rk4(self, f, y0, t0, dt, strength, density):
         y = np.array(y0)
@@ -167,7 +160,7 @@ class Planet():
         y_all = [y0]
         t_all = [t0]
 
-        while y[1] > 0 and y[3] > 0:  # 可以更改，m=0 或者 z=0发生
+        while y[1] >= 0 and y[3] >= 0:  # 可以更改，m=0 或者 z=0发生
             k1 = dt * f(t, y, strength, density)
             k2 = dt * f(t + 0.5 * dt, y + 0.5 * k1, strength, density)
             k3 = dt * f(t + 0.5 * dt, y + 0.5 * k2, strength, density)
@@ -182,35 +175,51 @@ class Planet():
         f = np.zeros_like(vmtzxrs)
         v, m, theta, z, x, r = vmtzxrs
         A = np.pi * r ** 2
-        rhoa =self.rhoa(z)
-        f[0] = (-self.Cd * rhoa * A * (v ** 2) )/ (2 * m) + self.g * np.sin(theta)
+        rhoa = self.rhoa(z)
+        f[0] = (-self.Cd * rhoa * A * (v ** 2)) / \
+            (2 * m) + self.g * np.sin(theta)
         f[1] = -self.Ch * self.rhoa(z) * A * v ** 3 / (2 * self.Q)
-        #f[1] = 0
-        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * rhoa * A * v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
+        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * rhoa * A *
+                                               v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
         f[3] = -v * np.sin(theta)
-        f[4] = v * np.cos(theta) / (1 + z / self.Rp)        
-        if rhoa*v**2 < strength:
+        f[4] = v * np.cos(theta) / (1 + z / self.Rp)
+        if rhoa * v**2 < strength:
             f[5] = 0
         else:
             f[5] = np.sqrt(7 / 2 * self.alpha * rhoa / density) * v
         return f
-    
+
     def f_analy(self, t, vmtzxrs, strength, density):
         f = np.zeros_like(vmtzxrs)
         v, m, theta, z, x, r = vmtzxrs
         A = np.pi * r ** 2
-        
-        f[0] = (-self.Cd * self.rhoa(z) * A * (v ** 2) )/ (2 * m) + self.g * np.sin(theta)
+
+        f[0] = (-self.Cd * self.rhoa(z) * A * (v ** 2)) / \
+            (2 * m) + self.g * np.sin(theta)
         f[1] = -self.Ch * self.rhoa(z) * A * v ** 3 / (2 * self.Q)
         f[1] = 0
-        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * self.rhoa(z) * A * v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
+        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * self.rhoa(z)
+                                               * A * v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
         f[3] = -v * np.sin(theta)
-        f[4] = v * np.cos(theta) / (1 + z / self.Rp)               
+        f[4] = v * np.cos(theta) / (1 + z / self.Rp)
         f[5] = 0
-        
+
         return f
+        f = np.zeros_like(vmtzxrs)
+        v, m, theta, z, x, r = vmtzxrs
+        A = np.pi * r ** 2
 
+        f[0] = (-self.Cd * self.rhoa(z) * A * (v ** 2)) / \
+            (2 * m) + self.g * np.sin(theta)
+        f[1] = -self.Ch * self.rhoa(z) * A * v ** 3 / (2 * self.Q)
+        f[1] = 0
+        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * self.rhoa(z)
+                                               * A * v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
+        f[3] = -v * np.sin(theta)
+        f[4] = v * np.cos(theta) / (1 + z / self.Rp)
+        f[5] = 0
 
+        return f
 
     def calculate_energy(self, result):
         """
@@ -231,8 +240,9 @@ class Planet():
 
         # Replace these lines with your code to add the dedz column to
         # the result DataFrame
-        result['dedz'] = np.nan
-        result['dedz'] = abs(((1 / 2) * result['mass'] * result['velocity'] ** 2).diff() / (result['altitude'] / 1000).diff()) / (4.184e12)
+        result = result.copy()
+        result['dedz'] = abs(((1 / 2) * result['mass'] * result['velocity']
+                              ** 2).diff() / (result['altitude'] / 1000).diff()) / (4.184e12)
         return result
 
     def analyse_outcome(self, result):
@@ -252,7 +262,8 @@ class Planet():
             the key ``outcome`` (which should contain one of the following strings:
             ``Airburst``, ``Cratering`` or ``Airburst and cratering``), as well as
             the following keys:
-            ``burst_peak_dedz``, ``burst_altitude``, ``burst_distance``, ``burst_energy``
+            ``burst_peak_dedz``, ``burst_altitude``, ``burst_distance``,
+             ``burst_energy``
         """
 
         outcome = {'outcome': 'Unknown',
@@ -262,9 +273,7 @@ class Planet():
                    'burst_energy': 0.}
 
         # get dedz column as a series
-        dedz = result.loc[:, 'dedz']
-        if dedz.empty is True:
-            return outcome
+        dedz = result.iloc[:, -1]
         outcome['burst_peak_dedz'] = dedz.max()
 
         # get the index of max dedz
@@ -294,3 +303,69 @@ class Planet():
             else:
                 outcome['outcome'] = 'Airburst and cratering'
         return outcome
+
+    def plot(self, result):
+        # 我们用result来自calculate_energy
+        # 需要在jupyter notebook上展示给客户。
+        result = result.copy()
+        t_list = result['time'].tolist()
+        v_list = result['velocity'].tolist()
+        m_list = result['mass'].tolist()
+        an_list = result['angle'].tolist()
+        al_list = result['altitude'].tolist()
+        d_list = result['distance'].tolist()
+        r_list = result['radius'].tolist()
+        e_list = result['dedz'].tolist()
+
+        fig, axs = plt.subplots(7, 1, figsize=(8, 12))
+        fig.tight_layout(w_pad=5, h_pad=5)
+        axs[0].plot(t_list, v_list, 'b', label='velocity')
+        axs[0].set_xlabel(r'$t$', fontsize=14)
+        axs[0].set_ylabel(r'$value$', fontsize=14)
+        axs[0].set_title('plot of asteroid speed changes ', fontsize=14)
+        axs[0].grid(True)
+        axs[0].legend(loc='best', fontsize=14)
+
+        axs[1].plot(t_list, m_list, 'b', label='mass')
+        axs[1].set_xlabel(r'$t$', fontsize=14)
+        axs[1].set_ylabel(r'$value$', fontsize=14)
+        axs[1].set_title('plot of asteroid mass changes', fontsize=14)
+        axs[1].grid(True)
+        axs[1].legend(loc='best', fontsize=14)
+
+        axs[2].plot(t_list, an_list, 'b', label='angle')
+        axs[2].set_xlabel(r'$t$', fontsize=14)
+        axs[2].set_ylabel(r'$value$', fontsize=14)
+        axs[2].set_title('plot of asteroid angle changes', fontsize=14)
+        axs[2].grid(True)
+        axs[2].legend(loc='best', fontsize=14)
+
+        axs[3].plot(t_list, al_list, 'b', label='altitude')
+        axs[3].set_xlabel(r'$t$', fontsize=14)
+        axs[3].set_ylabel(r'$value$', fontsize=14)
+        axs[3].set_title('plot of asteroid altitude changes', fontsize=14)
+        axs[3].grid(True)
+        axs[3].legend(loc='best', fontsize=14)
+
+        axs[4].plot(t_list, d_list, 'b', label='distance')
+        axs[4].set_xlabel(r'$t$', fontsize=14)
+        axs[4].set_ylabel(r'$value$', fontsize=14)
+        axs[4].set_title('plot of asteroid distance changes', fontsize=14)
+        axs[4].grid(True)
+        axs[4].legend(loc='best', fontsize=14)
+
+        axs[5].plot(t_list, r_list, 'b', label='radius')
+        axs[5].set_xlabel(r'$t$', fontsize=14)
+        axs[5].set_ylabel(r'$value$', fontsize=14)
+        axs[5].set_title('plot of asteroid radius changes', fontsize=14)
+        axs[5].grid(True)
+        axs[5].legend(loc='best', fontsize=14)
+
+        axs[6].plot(t_list, e_list, 'b', label='energy')
+        axs[6].set_xlabel(r'$t$', fontsize=14)
+        axs[6].set_ylabel(r'$value$', fontsize=14)
+        axs[6].set_title('plot of asteroid energy changes', fontsize=14)
+        axs[6].grid(True)
+        axs[6].legend(loc='best', fontsize=14)
+
+        plt.show()
