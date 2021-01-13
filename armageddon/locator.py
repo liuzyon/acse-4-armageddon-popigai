@@ -119,7 +119,7 @@ class PostcodeLocator(object):
         Examples
         --------
 
-        >>> locator = PostcodeLocator()
+        >>> locator = PostcodeLocator(postcode_file='./resources/full_postcodes.csv', census_file='./resources/population_by_postcode_sector.csv')
         >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.13e3])
         [['SW7 2AZ', 'SW7 2BT', 'SW7 2BU', 'SW7 2DD', 'SW7 5HF', 'SW7 5HG', 'SW7 5HQ']]
         >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.4e3, 0.2e3], True)
@@ -144,28 +144,28 @@ class PostcodeLocator(object):
         else:
             # for sector
             # method 1: average units distances as sector distance to X
-            df['sector'] = df['Postcode'].str[0:5]
-            distances = self.norm(coordinates_array, X)
-            df['distance'] = pd.Series(distances.flatten().tolist())
-            group = df.groupby('sector')
-            data = group.mean()
-            distances = data['distance'].values
-            sector_array = np.array(data.index)
-            for ra in radii:
-                list_ra = sector_array[distances < ra].tolist()
-                res.append(list_ra)
-            # method 2: average units coordinates as sector coordiante, and calculate distance to X
             # df['sector'] = df['Postcode'].str[0:5]
+            # distances = self.norm(coordinates_array, X)
+            # df['distance'] = pd.Series(distances.flatten().tolist())
             # group = df.groupby('sector')
             # data = group.mean()
-            # # 
-            # mean_coordinate = data.values.tolist()
-            # distances = self.norm(mean_coordinate, X)
-            # distances = distances.flatten()
+            # distances = data['distance'].values
             # sector_array = np.array(data.index)
             # for ra in radii:
             #     list_ra = sector_array[distances < ra].tolist()
             #     res.append(list_ra)
+            # method 2: average units coordinates as sector coordiante, and calculate distance to X
+            df['sector'] = df['Postcode'].str[0:5]
+            group = df.groupby('sector')
+            data = group.mean()
+
+            mean_coordinate = data.values.tolist()
+            distances = self.norm(mean_coordinate, X)
+            distances = distances.flatten()
+            sector_array = np.array(data.index)
+            for ra in radii:
+                list_ra = sector_array[distances < ra].tolist()
+                res.append(list_ra)
         return res
 
     def get_population_of_postcode(self, postcodes, sector=False):
@@ -188,7 +188,7 @@ class PostcodeLocator(object):
         Examples
         --------
 
-        >>> locator = PostcodeLocator()
+        >>> locator = PostcodeLocator(postcode_file='./resources/full_postcodes.csv', census_file='./resources/population_by_postcode_sector.csv')
         >>> locator.get_population_of_postcode([['SW7 2AZ','SW7 2BT','SW7 2BU','SW7 2DD']])
         [[0, 0, 0, 0]]
         >>> locator.get_population_of_postcode([['SW7  2']], True)
