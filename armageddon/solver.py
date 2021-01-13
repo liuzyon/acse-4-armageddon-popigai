@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 13 01:13:54 2021
+
+@author: su
+"""
+
 import numpy as np
 import pandas as pd
 
@@ -9,8 +17,8 @@ class Planet():
     and other constants
     """
 
-    def __init__(self, atmos_func='constant', atmos_filename=None,
-                 Cd=1., Ch=0.1, Q=1e7, Cl=1e-3, alpha=0.3, Rp=6371e3,
+    def __init__(self, atmos_func='exponential', atmos_filename=None,
+                 Cd=1., Ch=0.1, Q=1e7, Cl=0, alpha=0.3, Rp=6371e3,
                  g=9.81, H=8000., rho0=1.2):
         """
         Set up the initial parameters and constants for the target planet
@@ -67,7 +75,7 @@ class Planet():
 
         # set function to define atmoshperic density
         if atmos_func == 'exponential':
-            raise NotImplementedError
+            self.rhoa = lambda z: rho0 * np.exp(-z / H)
         elif atmos_func == 'tabular':
             raise NotImplementedError
         elif atmos_func == 'constant':
@@ -76,9 +84,10 @@ class Planet():
             raise NotImplementedError(
                 "atmos_func must be 'exponential', 'tabular' or 'constant'")
 
+
     def solve_atmospheric_entry(
             self, radius, velocity, density, strength, angle,
-            init_altitude=100e3, dt=0.05, radians=False):
+            init_altitude=100000, dt=0.05, radians=False):
         """
         Solve the system of differential equations for a given impact scenario
 
@@ -123,14 +132,83 @@ class Planet():
         """
 
         # Enter your code here to solve the differential equations
+        #角度制转弧度制
+        if radians == True:
+            theta0 = angle
+        else:
+            theta0 = angle * np.pi / 180
+        
+        
+        
+        
+        mass = 4/3*density*np.pi*radius**3
+        t0 = 0
+        vmtzxr0 = np.array([velocity, mass, theta0, init_altitude, 0, radius])        
+        vmtzxrs_Rk4, t_all = self.Rk4(self.f, vmtzxr0, t0, dt, strength, density)
+        #analytic
+        #vmtzxrs_Rk4, t_all = self.Rk4(self.f_analy, vmtzxr0, t0, dt, strength, density)
 
-        return pd.DataFrame({'velocity': velocity,
-                             'mass': np.nan,
-                             'angle': angle,
-                             'altitude': init_altitude,
-                             'distance': 0.0,
-                             'radius': radius,
-                             'time': 0.0}, index=range(1))
+
+
+        return pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1,0],
+                             'mass': vmtzxrs_Rk4[:-1,1],
+                             'angle': vmtzxrs_Rk4[:-1,2],
+                             'altitude': vmtzxrs_Rk4[:-1,3],
+                             'distance': vmtzxrs_Rk4[:-1,4],
+                             'radius': vmtzxrs_Rk4[:-1,5],
+                             'time': t_all[:-1]})
+            
+            
+    def Rk4(self, f, y0, t0, dt, strength, density):
+        y = np.array(y0)
+        t = np.array(t0)
+        y_all = [y0]
+        t_all = [t0]
+
+        while y[1] > 0 and y[3] > 0:  # 可以更改，m=0 或者 z=0发生
+            k1 = dt * f(t, y, strength, density)
+            k2 = dt * f(t + 0.5 * dt, y + 0.5 * k1, strength, density)
+            k3 = dt * f(t + 0.5 * dt, y + 0.5 * k2, strength, density)
+            k4 = dt * f(t + dt, y + k3, strength, density)
+            y = y + (1. / 6.) * (k1 + 2 * k2 + 2 * k3 + k4)
+            y_all.append(y)
+            t = t + dt
+            t_all.append(t)
+        return np.array(y_all), np.array(t_all)
+
+    def f(self,t, vmtzxrs, strength, density):
+        f = np.zeros_like(vmtzxrs)
+        v, m, theta, z, x, r = vmtzxrs
+        A = np.pi * r ** 2
+        rhoa =self.rhoa(z)
+        f[0] = (-self.Cd * rhoa * A * (v ** 2) )/ (2 * m) + self.g * np.sin(theta)
+        f[1] = -self.Ch * self.rhoa(z) * A * v ** 3 / (2 * self.Q)
+        #f[1] = 0
+        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * rhoa * A * v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
+        f[3] = -v * np.sin(theta)
+        f[4] = v * np.cos(theta) / (1 + z / self.Rp)        
+        if rhoa*v**2 < strength:
+            f[5] = 0
+        else:
+            f[5] = np.sqrt(7 / 2 * self.alpha * rhoa / density) * v
+        return f
+    
+    def f_analy(self,t, vmtzxrs, strength, density):
+        f = np.zeros_like(vmtzxrs)
+        v, m, theta, z, x, r = vmtzxrs
+        A = np.pi * r ** 2
+        
+        f[0] = (-self.Cd * self.rhoa(z) * A * (v ** 2) )/ (2 * m) + self.g * np.sin(theta)
+        f[1] = -self.Ch * self.rhoa(z) * A * v ** 3 / (2 * self.Q)
+        f[1] = 0
+        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * self.rhoa(z) * A * v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
+        f[3] = -v * np.sin(theta)
+        f[4] = v * np.cos(theta) / (1 + z / self.Rp)               
+        f[5] = 0
+        
+        return f
+
+
 
     def calculate_energy(self, result):
         """
@@ -154,7 +232,7 @@ class Planet():
         result = result.copy()
         result.insert(len(result.columns),
                       'dedz', np.array(np.nan))
-        result['dedz'] = abs(((1 / 2) * result['mass'] * result['velocity'] ** 2).diff() / (result['altitude'] / 1000).diff()) / (4.184e12)
+
         return result
 
     def analyse_outcome(self, result):
@@ -182,35 +260,18 @@ class Planet():
                    'burst_altitude': 0.,
                    'burst_distance': 0.,
                    'burst_energy': 0.}
-
-        # get dedz column as a series
-        dedz = result.iloc[:, -1]
-        outcome['burst_peak_dedz'] = dedz.max()
-        
-        # get the index of max dedz
-        max_index = dedz.idxmax()
-        outcome['burst_distance'] = result.loc[max_index, 'distance']
-        burst_altitude = result.loc[max_index, 'altitude']
-        outcome['burst_altitude'] = burst_altitude
-        burst_mass = result.loc[max_index, 'mass']
-        burst_velocity = result.loc[max_index, 'velocity']
-
-        init_mass = result.loc[0, 'mass']
-        init_velocity = result.loc[0, 'velocity']
-        init_KE = 1/2 * init_mass * init_velocity**2 / (4.184e12)
-        residual_KE = 1/2 * burst_mass * burst_velocity**2 / (4.184e12)
-        KE_loss = init_KE - residual_KE
-
-        if burst_altitude > 5000:
-            outcome['outcome'] = 'Airburst'
-            outcome['burst_energy'] = KE_loss
-        else:
-            if KE_loss > residual_KE:
-                outcome['burst_energy'] = KE_loss
-            else:
-                outcome['burst_energy'] = residual_KE
-            if max_index == dedz.size - 1:
-                outcome['outcome'] = 'Cratering'
-            else:
-                outcome['outcome'] = 'Airburst and cratering'
         return outcome
+    
+    
+p  = Planet()
+parameters = {'radius': 10.,
+              'velocity': 19e3,
+              'density': 3000.,
+              'strength': 1e6,
+              'angle': 20.0,
+              'init_altitude':20e4,
+              'dt': 0.05,
+              'radians': False }
+# numerical
+result1 = p.solve_atmospheric_entry(**parameters)
+print(result1)
