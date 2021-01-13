@@ -1,8 +1,8 @@
 """Module dealing with postcode information."""
 
-# from datetime import date
-# import os
-# import sys
+from datetime import date
+import os
+import sys
 
 import numpy as np
 import pandas as pd
@@ -74,8 +74,8 @@ def great_circle_distance(latlon1, latlon2):
 class PostcodeLocator(object):
     """Class to interact with a postcode database file."""
 
-    def __init__(self, postcode_file='./resources/full_postcodes.csv',
-                 census_file='./resources/population_by_postcode_sector.csv',
+    def __init__(self, postcode_file='./armageddon/resources/full_postcodes.csv',
+                 census_file='./armageddon/resources/population_by_postcode_sector.csv',
                  norm=great_circle_distance):
         """
         Parameters
