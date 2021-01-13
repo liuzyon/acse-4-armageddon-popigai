@@ -159,16 +159,23 @@ class Planet():
         t = np.array(t0)
         y_all = [y0]
         t_all = [t0]
+        dt0 = 0.01
+        result = dt/dt0
+        count = 0
 
         while y[1] >= 0 and y[3] >= 0:  # 可以更改，m=0 或者 z=0发生
-            k1 = dt * f(t, y, strength, density)
-            k2 = dt * f(t + 0.5 * dt, y + 0.5 * k1, strength, density)
-            k3 = dt * f(t + 0.5 * dt, y + 0.5 * k2, strength, density)
-            k4 = dt * f(t + dt, y + k3, strength, density)
+            count += 1
+            k1 = dt0 * f(t, y, strength, density)
+            k2 = dt0 * f(t + 0.5 * dt0, y + 0.5 * k1, strength, density)
+            k3 = dt0 * f(t + 0.5 * dt0, y + 0.5 * k2, strength, density)
+            k4 = dt0 * f(t + dt0, y + k3, strength, density)
             y = y + (1. / 6.) * (k1 + 2 * k2 + 2 * k3 + k4)
-            y_all.append(y)
-            t = t + dt
-            t_all.append(t)
+            t = t + dt0
+
+            if count % result == 0.0:
+                y_all.append(y)
+                t_all.append(t)
+
         return np.array(y_all), np.array(t_all)
 
     def f(self, t, vmtzxrs, strength, density):
