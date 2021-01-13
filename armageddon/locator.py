@@ -127,26 +127,43 @@ class PostcodeLocator(object):
         """
 
         # Read the file, Data type conversion and prepare data.
+        df = pd.read_csv(self.postcode_file)
         postcodes_df = pd.read_csv(self.postcode_file, usecols=[0])
         coordinates_df = pd.read_csv(self.postcode_file, usecols=[2, 3])
 
         postcodes_array = postcodes_df.values   # units array
-        coordinates_array = coordinates_df.values.tolist()   # unit coordinates array
+        coordinates_array = coordinates_df.values.tolist()   # unit coordinates array list
         X = list(X)
 
-        # Calculate the distance for all postcodes.
-        distances = self.norm(coordinates_array, X)
 
         res = []
         if not sector:
+            # Calculate the distance for all postcodes.
+            distances = self.norm(coordinates_array, X)
+            # for unit
             # Iterate each radius value in list, each iteration check coordinates of all postcodes.
-            # If it's within the circle, add the postcode to the postcodes_ra list for the current radius value.
+            # If it's within the circle, add the postcode to the list_ra list for the current radius value.
             for ra in radii:
-                postcodes_ra = postcodes_array[distances[:, 0] < ra].flatten().tolist()
-                res.append(postcodes_ra)
+                list_ra = postcodes_array[distances[:, 0] < ra].flatten().tolist()
+                res.append(list_ra)
         else:
-            pass
-
+            # for sector
+            # for each unit, cut the last two character.
+            units_list = postcodes_array.copy().astype(str).flatten().tolist()
+            sectors_list = [val[:5] for val in units_list]
+            sector_array = np.array(sectors_list)
+            sector_array = np.unique(sector_array)  # unique sector array
+            for ra in radii:
+                list_ra = []
+                for sect in sector_array:
+                    print(sect)
+                    rows_select = df[df['Postcode'].str.contains(sect)]
+                    sect_units_list = rows_select[['Latitude', 'Longitude']].values.tolist()
+                    distances = self.norm(sect_units_list, X)
+                    # if the mean distance of units less than ra, this sector belongs to the level
+                    if np.mean(distances) < ra:
+                        list_ra.append(sect)
+                res.append(list_ra)
         return res
 
     def get_population_of_postcode(self, postcodes, sector=False):
