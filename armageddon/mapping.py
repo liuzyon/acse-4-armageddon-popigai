@@ -2,7 +2,7 @@ import folium
 import numpy as np
 
 
-def plot_circle(lat, lon, radius, map=None, **kwargs):
+def plot_circle(lat, lon, radius, level, map=None, **kwargs):
     """
     Plot a circle on a map (creating a new folium map instance if necessary).
 
@@ -32,7 +32,20 @@ def plot_circle(lat, lon, radius, map=None, **kwargs):
 
     if not map:
         map = folium.Map(location=[lat, lon], control_scale=True)
+    
+    color_dict = {4: 'red', 3: 'purple', 2: 'blue', 1: 'green'}
+    folium.Circle([lat, lon], radius, color=color_dict[level], fill_color=color_dict[level], fill=True, fillOpacity=0.8, **kwargs).add_to(map)
+    return map
 
-    folium.Circle([lat, lon], radius, fill=True, fillOpacity=0.6, **kwargs).add_to(map)
 
+def plot_results(burst_lat, burst_lon, blast_lat, blast_lon, radius_list):
+    map = folium.Map(location=[blast_lat, blast_lon], control_scale=True)
+    folium.PolyLine([
+                    [burst_lat, burst_lon],
+                    [blast_lat, blast_lon]
+                    ], color='black').add_to(map)
+    radius_list.sort(reverse=True)
+    for i in range(len(radius_list)):
+        map = plot_circle(blast_lat, blast_lon, radius_list[i], i+1, map)
+    map.save("index.html")
     return map
