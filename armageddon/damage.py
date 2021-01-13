@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import math
 
 
 def p(r, E, z, p_t=0):
@@ -109,12 +108,32 @@ def find_r_bisect(E, z, p_l):
             if max_p >= p_t else 0. for p_t in p_l]
 
 
-def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
-    sin_phi_2 = math.sin(phi_1) * math.cos(r/Rp) + math.cos(phi_1) * math.sin(r/Rp) * math.cos(beta)
-    phi_2 = math.asin(sin_phi_2)
-    tanh_lambda_2_lambda_1 = math.sin(beta) * math.sin(r/Rp) * math.cos(phi_1) / (math.cos(r/Rp) - math.sin(phi_1) * math.sin(phi_2))
-    lambda_2 = math.atan(tanh_lambda_2_lambda_1) + lambda_1
-    return phi_2, lambda_2
+def surf_zero_loc(r, elat, elon, bearing, Rp=6.371e6):
+    """
+    Calculate the latitude and longitude of the surface zero location
+
+    Parameters
+    ----------
+    r: float
+        the burst distance (m)
+    elat, elon, bearing are the same as damage_zones()
+    Rp: float
+        the radius of the spherical Earth
+
+    Return
+    ------
+    blat, blon is latitude and longitude of the surface zero location (radian)
+    """
+    # pre-computation
+    im = r / Rp  # intermidiate value
+    elat, elon, bearing = np.radians([elat, elon, bearing])  # to radian
+
+    blat = np.arcsin(np.sin(elat) * np.cos(im)
+                     + np.cos(elat) * np.sin(im) * np.cos(bearing))
+    blon = np.arctan(np.sin(bearing) * np.sin(im) * np.cos(elat)
+                     / (np.cos(im) - np.sin(elat) * np.sin(blat))) + elon
+
+    return np.degrees([blat, blon])  # to degree
 
 
 def damage_zones(outcome, lat, lon, bearing, pressures):
@@ -154,8 +173,7 @@ def damage_zones(outcome, lat, lon, bearing, pressures):
                                 pressures=[1e3, 3.5e3, 27e3, 43e3])
     """
 
-    blat = lat
-    blon = lon
+    blat, blon = surf_zero_loc(outcome['burst_distance'], lat, lon, bearing)
     damrad = find_r_bisect(outcome['burst_energy'],
                            outcome['burst_altitude'],
                            pressures)
