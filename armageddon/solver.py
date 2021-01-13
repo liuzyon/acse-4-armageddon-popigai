@@ -122,15 +122,79 @@ class Planet():
             'distance', 'radius', 'time'
         """
 
-        # Enter your code here to solve the differential equations
 
-        return pd.DataFrame({'velocity': velocity,
-                             'mass': np.nan,
-                             'angle': angle,
-                             'altitude': init_altitude,
-                             'distance': 0.0,
-                             'radius': radius,
-                             'time': 0.0}, index=range(1))
+        # Enter your code here to solve the differential equations
+        # 角度制转弧度制
+        if radians == True:
+            theta0 = angle
+        else:
+            theta0 = angle * np.pi / 180
+
+        mass = 4 / 3 * density * np.pi * radius ** 3
+        t0 = 0
+        vmtzxr0 = np.array([velocity, mass, theta0, init_altitude, 0, radius])
+        vmtzxrs_Rk4, t_all = self.Rk4(self.f, vmtzxr0, t0, dt, strength, density)
+        # analytic
+        # vmtzxrs_Rk4, t_all = self.Rk4(self.f_analy, vmtzxr0, t0, dt, strength, density)
+
+        return pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1, 0],
+                             'mass': vmtzxrs_Rk4[:-1, 1],
+                             'angle': vmtzxrs_Rk4[:-1, 2],
+                             'altitude': vmtzxrs_Rk4[:-1, 3],
+                             'distance': vmtzxrs_Rk4[:-1, 4],
+                             'radius': vmtzxrs_Rk4[:-1, 5],
+                             'time': t_all[:-1]})
+
+    def Rk4(self, f, y0, t0, dt, strength, density):
+        y = np.array(y0)
+        t = np.array(t0)
+        y_all = [y0]
+        t_all = [t0]
+
+        while y[1] > 0 and y[3] > 0:  # 可以更改，m=0 或者 z=0发生
+            k1 = dt * f(t, y, strength, density)
+            k2 = dt * f(t + 0.5 * dt, y + 0.5 * k1, strength, density)
+            k3 = dt * f(t + 0.5 * dt, y + 0.5 * k2, strength, density)
+            k4 = dt * f(t + dt, y + k3, strength, density)
+            y = y + (1. / 6.) * (k1 + 2 * k2 + 2 * k3 + k4)
+            y_all.append(y)
+            t = t + dt
+            t_all.append(t)
+        return np.array(y_all), np.array(t_all)
+
+    def f(self, t, vmtzxrs, strength, density):
+        f = np.zeros_like(vmtzxrs)
+        v, m, theta, z, x, r = vmtzxrs
+        A = np.pi * r ** 2
+        rhoa = self.rhoa(z)
+        f[0] = (-self.Cd * rhoa * A * (v ** 2)) / (2 * m) + self.g * np.sin(theta)
+        f[1] = -self.Ch * self.rhoa(z) * A * v ** 3 / (2 * self.Q)
+        # f[1] = 0
+        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * rhoa * A * v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
+        f[3] = -v * np.sin(theta)
+        f[4] = v * np.cos(theta) / (1 + z / self.Rp)
+        if rhoa * v ** 2 < strength:
+            f[5] = 0
+        else:
+            f[5] = np.sqrt(7 / 2 * self.alpha * rhoa / density) * v
+        return f
+
+    def f_analy(self, t, vmtzxrs, strength, density):
+        f = np.zeros_like(vmtzxrs)
+        v, m, theta, z, x, r = vmtzxrs
+        A = np.pi * r ** 2
+
+        f[0] = (-self.Cd * self.rhoa(z) * A * (v ** 2)) / (2 * m) + self.g * np.sin(theta)
+        f[1] = -self.Ch * self.rhoa(z) * A * v ** 3 / (2 * self.Q)
+        f[1] = 0
+        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * self.rhoa(z) * A * v / (2 * m)) - (
+                    v * np.cos(theta) / (self.Rp + z))
+        f[3] = -v * np.sin(theta)
+        f[4] = v * np.cos(theta) / (1 + z / self.Rp)
+        f[5] = 0
+
+        return f
+
 
     def calculate_energy(self, result):
         """
