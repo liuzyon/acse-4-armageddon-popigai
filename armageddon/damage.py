@@ -70,8 +70,8 @@ def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
     np.sin(phi_2) = np.sin(phi_1) * np.cos(r/Rp) + np.cos(phi_1) * np.sin(r/Rp) * np.cos(beta)
     np.tanh(lambda_2-lambda_1) = np.sin(beta) * np.sin(r/Rp) * np.cos(phi_1) / (np.cos(r/Rp) - np.sin(phi_1) * np.sin(phi_2))
     # to be confirmed
-    phi_2 = asin(np.sin(phi_2))
-    lambda_2 = atan(np.tanh(lambda_2 - lambda_1)) + lambda_1
+    phi_2 = np.asin(np.sin(phi_2))
+    lambda_2 = np.atan(np.tanh(lambda_2 - lambda_1)) + lambda_1
     return phi_2, lambda_2
 
 
