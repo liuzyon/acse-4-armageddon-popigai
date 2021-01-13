@@ -151,7 +151,7 @@ class Planet():
 
 
 
-        return pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1,0],
+        Result = pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1,0],
                              'mass': vmtzxrs_Rk4[:-1,1],
                              'angle': vmtzxrs_Rk4[:-1,2],
                              'altitude': vmtzxrs_Rk4[:-1,3],
@@ -159,7 +159,8 @@ class Planet():
                              'radius': vmtzxrs_Rk4[:-1,5],
                              'time': t_all[:-1]})
             
-            
+        return Result
+
     def Rk4(self, f, y0, t0, dt, strength, density):
         y = np.array(y0)
         t = np.array(t0)
@@ -256,7 +257,7 @@ class Planet():
 
         # Replace these lines with your code to add the dedz column to
         # the result DataFrame
-        result = result.copy()
+        result['dedz'] = np.nan
         result['dedz'] = abs(((1 / 2) * result['mass'] * result['velocity'] ** 2).diff() / (result['altitude'] / 1000).diff()) / (4.184e12)
         return result
 
@@ -287,7 +288,9 @@ class Planet():
                    'burst_energy': 0.}
 
         # get dedz column as a series
-        dedz = result.iloc[:, -1]
+        dedz = result.loc[:, 'dedz']
+        if dedz.empty is True:
+            return outcome
         outcome['burst_peak_dedz'] = dedz.max()
 
         # get the index of max dedz

@@ -19,10 +19,12 @@ result = earth.calculate_energy(result)
 # Determine the outcomes of the impact event
 outcome = earth.analyse_outcome(result)
 
+print(result)
+print(outcome)
 #####################
 ### Damage Mapper ###
 #####################
-
+""""
 # Calculate the blast location and damage radius for several pressure levels
 blast_lat, blast_lon, damage_rad = armageddon.damage_zones(outcome, 
                                                            lat=51.2, lon=0.7, bearing=-35.,
@@ -44,4 +46,4 @@ population = locator.get_population_of_postcode(postcodes)
 # Alternatively find the postcode sectors in the damage radii, and populations of the sectors
 sectors = locator.get_postcodes_by_radius((blast_lat, blast_lon), radii=damage_rad, sector=True)
 population_sector = locator.get_population_of_postcode(sectors, sector=True)
-
+"""
