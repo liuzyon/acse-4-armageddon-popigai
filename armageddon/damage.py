@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-import scipy.optimize as sop
-
 
 def p(r, E, z, p_t=0):
     """
@@ -81,9 +79,8 @@ def find_r_bisect(E, z, p_l):
 
     Returns
     -------
-    radii: array-like, float
-        a list of radius or one radius corresponds to the provided levels
-        depends on the input p_l is an array or a float
+    radii: list
+        radii/radius corresponds to the provided levels
     """
     # parse and check input parameters
     try:
@@ -102,29 +99,22 @@ def find_r_bisect(E, z, p_l):
     min_r = 1e-6
     dr = 2**15
 
-    rtn_l = np.zeros_like(p_l, dtype=float)
-    max_p = p(min_r, E, z)
-
     # if energy is zero, all impact radii is zero
-    if E > 0:
-        for i, p_t in enumerate(p_l):
-            if max_p >= p_t:
-                rtn_l[i] = bisection(p, min_r, min_r+dr, E, z, p_t)
+    if E == 0:
+        return [0 for _ in p_l]
 
-    # return an array or a float depends on the length of rtn_l
-    if len(rtn_l) == 1:
-        return rtn_l[0]
-    else:
-        return rtn_l
+    max_p = p(min_r, E, z)
+    return [bisection(min_r, min_r+dr, E, z, p_t)
+            if max_p >= p_t else 0. for p_t in p_l]
 
 
-def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
-    np.sin(phi_2) = np.sin(phi_1) * np.cos(r/Rp) + np.cos(phi_1) * np.sin(r/Rp) * np.cos(beta)
-    np.tanh(lambda_2-lambda_1) = np.sin(beta) * np.sin(r/Rp) * np.cos(phi_1) / (np.cos(r/Rp) - np.sin(phi_1) * np.sin(phi_2))
-    # to be confirmed
-    phi_2 = np.asin(np.sin(phi_2))
-    lambda_2 = np.atan(np.tanh(lambda_2 - lambda_1)) + lambda_1
-    return phi_2, lambda_2
+# def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
+#     np.sin(phi_2) = np.sin(phi_1) * np.cos(r/Rp) + np.cos(phi_1) * np.sin(r/Rp) * np.cos(beta)
+#     np.tanh(lambda_2-lambda_1) = np.sin(beta) * np.sin(r/Rp) * np.cos(phi_1) / (np.cos(r/Rp) - np.sin(phi_1) * np.sin(phi_2))
+#     # to be confirmed
+#     phi_2 = np.asin(np.sin(phi_2))
+#     lambda_2 = np.atan(np.tanh(lambda_2 - lambda_1)) + lambda_1
+#     return phi_2, lambda_2
 
 
 def damage_zones(outcome, lat, lon, bearing, pressures):
