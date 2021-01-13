@@ -108,24 +108,13 @@ def find_r_bisect(E, z, p_l):
     return [bisection(min_r, min_r+dr, E, z, p_t)
             if max_p >= p_t else 0. for p_t in p_l]
 
-<<<<<<< HEAD
+
 def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
     sin_phi_2 = math.sin(phi_1) * math.cos(r/Rp) + math.cos(phi_1) * math.sin(r/Rp) * math.cos(beta)
-    tanh_lambda_2_lambda_1 = math.sin(beta) * math.sin(r/Rp) * math.cos(phi_1) / (math.cos(r/Rp) - math.sin(phi_1) * math.sin(phi_2))
-    # to be confirmed
     phi_2 = math.asin(sin_phi_2)
+    tanh_lambda_2_lambda_1 = math.sin(beta) * math.sin(r/Rp) * math.cos(phi_1) / (math.cos(r/Rp) - math.sin(phi_1) * math.sin(phi_2))
     lambda_2 = math.atan(tanh_lambda_2_lambda_1) + lambda_1
     return phi_2, lambda_2
-=======
-
-# def surface_zero_location(r, Rp, phi_1, lambda_1, beta):
-#     np.sin(phi_2) = np.sin(phi_1) * np.cos(r/Rp) + np.cos(phi_1) * np.sin(r/Rp) * np.cos(beta)
-#     np.tanh(lambda_2-lambda_1) = np.sin(beta) * np.sin(r/Rp) * np.cos(phi_1) / (np.cos(r/Rp) - np.sin(phi_1) * np.sin(phi_2))
-#     # to be confirmed
-#     phi_2 = np.asin(np.sin(phi_2))
-#     lambda_2 = np.atan(np.tanh(lambda_2 - lambda_1)) + lambda_1
-#     return phi_2, lambda_2
->>>>>>> 75fe788ce793c703047c64c66a35e72c7d7135cd
 
 
 def damage_zones(outcome, lat, lon, bearing, pressures):
