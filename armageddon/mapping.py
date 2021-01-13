@@ -36,3 +36,10 @@ def plot_circle(lat, lon, radius, map=None, **kwargs):
     folium.Circle([lat, lon], radius, fill=True, fillOpacity=0.6, **kwargs).add_to(map)
 
     return map
+
+
+latitude = 44
+longitude = 55
+radius = [4400, 3300, 2200, 1100]
+damage_level = ['1', '2', '3', '4']
+map = plot_circle(latitude, longitude, radius, damage_level)
