@@ -151,7 +151,7 @@ class Planet():
 
 
 
-        Result = pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1,0],
+        return pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1,0],
                              'mass': vmtzxrs_Rk4[:-1,1],
                              'angle': vmtzxrs_Rk4[:-1,2],
                              'altitude': vmtzxrs_Rk4[:-1,3],
@@ -159,33 +159,7 @@ class Planet():
                              'radius': vmtzxrs_Rk4[:-1,5],
                              'time': t_all[:-1]})
             
-        return Result
 
-    def Rk4(self, f, y0, t0, dt, strength, density):
-        y = np.array(y0)
-        t = np.array(t0)
-        y_all = [y0]
-        t_all = [t0]
-        # 角度制转弧度制
-        if radians == True:
-            theta0 = angle
-        else:
-            theta0 = angle * np.pi / 180
-
-        mass = 4 / 3 * density * np.pi * radius ** 3
-        t0 = 0
-        vmtzxr0 = np.array([velocity, mass, theta0, init_altitude, 0, radius])
-        vmtzxrs_Rk4, t_all = self.Rk4(self.f, vmtzxr0, t0, dt, strength, density)
-        # analytic
-        # vmtzxrs_Rk4, t_all = self.Rk4(self.f_analy, vmtzxr0, t0, dt, strength, density)
-
-        return pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1, 0],
-                             'mass': vmtzxrs_Rk4[:-1, 1],
-                             'angle': vmtzxrs_Rk4[:-1, 2],
-                             'altitude': vmtzxrs_Rk4[:-1, 3],
-                             'distance': vmtzxrs_Rk4[:-1, 4],
-                             'radius': vmtzxrs_Rk4[:-1, 5],
-                             'time': t_all[:-1]})
 
     def Rk4(self, f, y0, t0, dt, strength, density):
         y = np.array(y0)
@@ -204,7 +178,7 @@ class Planet():
             t_all.append(t)
         return np.array(y_all), np.array(t_all)
 
-    def f(self,t, vmtzxrs, strength, density):
+    def f(self, t, vmtzxrs, strength, density):
         f = np.zeros_like(vmtzxrs)
         v, m, theta, z, x, r = vmtzxrs
         A = np.pi * r ** 2
@@ -221,7 +195,7 @@ class Planet():
             f[5] = np.sqrt(7 / 2 * self.alpha * rhoa / density) * v
         return f
     
-    def f_analy(self,t, vmtzxrs, strength, density):
+    def f_analy(self, t, vmtzxrs, strength, density):
         f = np.zeros_like(vmtzxrs)
         v, m, theta, z, x, r = vmtzxrs
         A = np.pi * r ** 2
