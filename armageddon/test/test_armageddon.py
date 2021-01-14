@@ -114,7 +114,6 @@ def test_analytical_solution(armageddon):
     m = result.loc[:, 'mass']
     assert np.allclose(m0, m)
 
-    angle_analytical = 20 * np.pi / 180
     angle = result.loc[:, 'angle']
     assert np.allclose(20, angle)
 
