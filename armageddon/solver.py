@@ -9,7 +9,7 @@ Created on Wed Jan 13 01:13:54 2021
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import data
+
 
 class Planet():
     """
@@ -73,12 +73,16 @@ class Planet():
         self.g = g
         self.H = H
         self.rho0 = rho0
+        self.df = None
 
         # set function to define atmoshperic density
         if atmos_func == 'exponential':
             self.rhoa = lambda z: rho0 * np.exp(-z / H)
         elif atmos_func == 'tabular':
-            self.rhoa = lambda z: self.extension1(z)
+            self.df = pd.read_csv('data/AltitudeDensityTable.csv',
+                                  sep=' ', skiprows=6,
+                                  names=['Altitude', 'Density', 'Height'])
+            self.rhoa = lambda z: self.cal_rho_a(z)
         elif atmos_func == 'constant':
             self.rhoa = lambda x: rho0
         else:
@@ -243,35 +247,27 @@ class Planet():
 
         return f
 
-    #using the method of bisection to seach dataframe quickly
-    def extension1(self, s):
-        df = pd.read_csv('data/AltitudeDensityTable.csv', sep=' ', skiprows=6,
-                         names=['Altitude', 'Density', 'Height'])
-        data = df['Altitude'].tolist()
-        low = 0
-        high = len(data)
+    def cal_rho_a(self, z):
+        """
+        evaluation atmosphere density from tabular
 
-        while low < high:
-            mid = int((low + high) / 2)
-            if data[mid] < s:
-                low = mid + 1
-            else:
-                high = mid
+        Parameters
+        ----------
+        z: number
+            the evaluation altitude
 
-        if s <= data[0]:
-            x = -1
-            y = -1
-            z = -1
-        elif s >= data[-1]:
-            t = len(data) - 1
-            x, y, z = df.iloc[-1]
-        elif s > data[high]:
-            x, y, z = df.iloc[high]
-        else:
-            x, y, z = df.iloc[high - 1]
+        Return
+        ------
+        rho_a: float
+            the evaluated atmosphere density
 
-        return y * np.exp((x - s) / z)
-
+        >>> cal_rho_a(0)
+        >>> 1.225
+        >>> cal_rho_a(100000)
+        >>> 4.365910282319956e-07
+        """
+        z_i, rho_i, H_i = self.df.iloc[min(8600, int(z / 10.))]
+        return rho_i * np.exp((z_i-z) / H_i)
 
     def calculate_energy(self, result):
         """
