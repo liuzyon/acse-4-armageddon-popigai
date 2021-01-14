@@ -78,7 +78,12 @@ class Planet():
         if atmos_func == 'exponential':
             self.rhoa = lambda z: rho0 * np.exp(-z / H)
         elif atmos_func == 'tabular':
-            raise NotImplementedError
+            # using linear regression model to calculate the expoential function between density and altitude
+            df1 = pd.read_csv('/Users/ydd/PycharmProjects/pythonProject1/AltitudeDensityTable.csv', sep=' ', skiprows=6,
+                              names=['Altitude', 'Density', 'Height'])
+            beta = np.exp(np.cov(df1['Altitude'], np.log(df1['Density']))[0][1] / np.var(df1['Altitude']))
+            alpha = np.exp(np.log(df1['Density']).mean(axis=0) - beta * df1['Altitude'].mean(axis=0))
+            self.rhoa = lambda z: alpha * beta ** z
         elif atmos_func == 'constant':
             self.rhoa = lambda x: rho0
         else:
