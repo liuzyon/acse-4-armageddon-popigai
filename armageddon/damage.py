@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import locator
-import solver
 
 def p(r, E, z, p_t=0):
     """

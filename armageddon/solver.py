@@ -9,7 +9,7 @@ Created on Wed Jan 13 01:13:54 2021
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import data
 
 class Planet():
     """
@@ -78,14 +78,7 @@ class Planet():
         if atmos_func == 'exponential':
             self.rhoa = lambda z: rho0 * np.exp(-z / H)
         elif atmos_func == 'tabular':
-            # using linear regression model to calculate the expoential function between density and altitude
-            df1 = pd.read_csv('/data/AltitudeDensityTable.csv', sep=' ', skiprows=6,
-                              names=['Altitude', 'Density', 'Height'])
-            beta = np.exp(np.cov(df1['Altitude'], np.log(df1['Density']))[
-                          0][1] / np.var(df1['Altitude']))
-            alpha = np.exp(np.log(df1['Density']).mean(
-                axis=0) - beta * df1['Altitude'].mean(axis=0))
-            self.rhoa = lambda z: np.exp(alpha)*np.exp(beta**z)
+            self.rhoa = lambda z: self.extension1(z)
         elif atmos_func == 'constant':
             self.rhoa = lambda x: rho0
         else:
@@ -249,6 +242,36 @@ class Planet():
         f[5] = 0
 
         return f
+
+    #using the method of bisection to seach dataframe quickly
+    def extension1(self, s):
+        df = pd.read_csv('data/AltitudeDensityTable.csv', sep=' ', skiprows=6,
+                         names=['Altitude', 'Density', 'Height'])
+        data = df['Altitude'].tolist()
+        low = 0
+        high = len(data)
+
+        while low < high:
+            mid = int((low + high) / 2)
+            if data[mid] < s:
+                low = mid + 1
+            else:
+                high = mid
+
+        if s <= data[0]:
+            x = -1
+            y = -1
+            z = -1
+        elif s >= data[-1]:
+            t = len(data) - 1
+            x, y, z = df.iloc[-1]
+        elif s > data[high]:
+            x, y, z = df.iloc[high]
+        else:
+            x, y, z = df.iloc[high - 1]
+
+        return y * np.exp((x - s) / z)
+
 
     def calculate_energy(self, result):
         """
