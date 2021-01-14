@@ -129,8 +129,10 @@ class PostcodeLocator(object):
         # Read the file, Data type conversion and prepare data.
         df = pd.read_csv(self.postcode_file)
 
-        postcodes_array = df[['Postcode']].values   # units array
-        coordinates_array = df[['Latitude', 'Longitude']].values.tolist()   # unit coordinates array list
+        # units array(1D)
+        postcodes_array = df[['Postcode']].values.flatten()
+        # unit coordinates array list(2D)
+        coordinates_array = df[['Latitude', 'Longitude']].values.tolist()
         X = list(X)
 
         res = []
@@ -138,11 +140,14 @@ class PostcodeLocator(object):
             # for unit
             # Calculate the distance for all postcodes.
             distances = self.norm(coordinates_array, X)
+            # distance with X array(1D)
+            distances_array = distances.flatten()
             for ra in radii:
-                list_ra = postcodes_array[distances[:, 0] < ra].flatten().tolist()
+                list_ra = postcodes_array[distances_array < ra].tolist()
                 res.append(list_ra)
         else:
             # for sector
+
             # method 1: average units distances as sector distance to X
             # df['sector'] = df['Postcode'].str[0:5]
             # distances = self.norm(coordinates_array, X)
@@ -154,6 +159,7 @@ class PostcodeLocator(object):
             # for ra in radii:
             #     list_ra = sector_array[distances < ra].tolist()
             #     res.append(list_ra)
+
             # method 2: average units coordinates as sector coordiante, and calculate distance to X
             df['sector'] = df['Postcode'].str[0:5]
             group = df.groupby('sector')

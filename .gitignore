@@ -1,7 +1,7 @@
 *~
 *.ipynb_checkpoints
 *pycache*
-
+*.ipynb
 
 .DS_Store
 .pytest_cache/
