@@ -27,8 +27,8 @@ def plot_circle(lat, lon, radius, level, map=None, **kwargs):
     Examples
     --------
 
-    >>> import folium
-    >>> armageddon.plot_circle(52.79, -2.95, 1e3, map=None)
+    # >>> import folium
+    # >>> armageddon.plot_circle(52.79, -2.95, 1e3, map=None)
     """
 
     if not map:
