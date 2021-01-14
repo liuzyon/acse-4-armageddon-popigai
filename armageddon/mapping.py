@@ -60,19 +60,20 @@ def plot_results(burst_lat, burst_lon, blast_lat, blast_lon, radius_list, postco
                 marker_lat = row_select.iloc[0]['Latitude']
                 marker_lon = row_select.iloc[0]['Longitude']
                 folium.Marker([marker_lat, marker_lon],
-                              popup='Unit: ' + postcodes[i][j] + '\nAll usual residents: ' + str(population[i][j]),
+                              popup='Unit: ' + postcodes[i][j] + '<br>All usual residents: ' + str(population[i][j]),
                               tooltip="Click me!").add_to(map)
     else:
         # plot sector
         for i in range(len(postcodes)):
             for j in range(len(postcodes[i])):
-                # 这里sector postcode无空格
-                units_in_sector = postcodes_df[postcodes_df['Postcode'].str.contains(postcodes[i][j])]
+                # 这里从上一个方法结果加空格后的sector postcode
+                sector_postcode = postcodes[i][j][:4] + postcodes[i][j][5:]
+                units_in_sector = postcodes_df[postcodes_df['Postcode'].str.contains(sector_postcode)]
                 # 算sector平均坐标
                 marker_lat = units_in_sector['Latitude'].mean()
                 marker_lon = units_in_sector['Longitude'].mean()
                 folium.Marker([marker_lat, marker_lon],
-                              popup='Sector: ' + postcodes[i][j] + '\nAll usual residents: ' + str(population[i][j]),
+                              popup='Sector: ' + postcodes[i][j] + '<br>All usual residents: ' + str(population[i][j]),
                               tooltip="Click me!").add_to(map)
 
     map.save("index.html")
