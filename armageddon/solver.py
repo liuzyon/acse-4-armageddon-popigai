@@ -81,8 +81,10 @@ class Planet():
             # using linear regression model to calculate the expoential function between density and altitude
             df1 = pd.read_csv('/data/AltitudeDensityTable.csv', sep=' ', skiprows=6,
                               names=['Altitude', 'Density', 'Height'])
-            beta = np.exp(np.cov(df1['Altitude'], np.log(df1['Density']))[0][1] / np.var(df1['Altitude']))
-            alpha = np.exp(np.log(df1['Density']).mean(axis=0) - beta * df1['Altitude'].mean(axis=0))
+            beta = np.exp(np.cov(df1['Altitude'], np.log(df1['Density']))[
+                          0][1] / np.var(df1['Altitude']))
+            alpha = np.exp(np.log(df1['Density']).mean(
+                axis=0) - beta * df1['Altitude'].mean(axis=0))
             self.rhoa = lambda z: np.exp(alpha)*np.exp(beta**z)
         elif atmos_func == 'constant':
             self.rhoa = lambda x: rho0
@@ -153,7 +155,7 @@ class Planet():
 
         return pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1, 0],
                              'mass': vmtzxrs_Rk4[:-1, 1],
-                             'angle': vmtzxrs_Rk4[:-1, 2],
+                             'angle': vmtzxrs_Rk4[:-1, 2]*180/np.pi,
                              'altitude': vmtzxrs_Rk4[:-1, 3],
                              'distance': vmtzxrs_Rk4[:-1, 4],
                              'radius': vmtzxrs_Rk4[:-1, 5],
@@ -196,12 +198,11 @@ class Planet():
         t = np.array(t0)
         y_all = [y0]
         t_all = [t0]
-        # dt0 = self.min_max_fact(dt, 1e-2)
-        dt0 = 1e-2
+        dt0 = self.min_max_fact(dt, 1e-2)
         result = dt / dt0
         count = 0
 
-        while y[1] >= 0 and y[3] >= 0:  # 可以更改，m=0 或者 z=0发生
+        while y[1] >= 0 and y[3] >= 0 and y[2] > 0:
             count += 1
             k1 = dt0 * f(t, y, strength, density)
             k2 = dt0 * f(t + 0.5 * dt0, y + 0.5 * k1, strength, density)
