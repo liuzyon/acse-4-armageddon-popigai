@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="188d7a3e-b7cd-406f-bbbf-577136c284ba" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="JupyterTrust" id="db189d62-4522-4123-b000-7d8d42b79574" />
+  <component name="ProjectId" id="1mztAVLZFXkkBLN3rEBxO9qAqXp" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="188d7a3e-b7cd-406f-bbbf-577136c284ba" name="Default Changelist" comment="" />
+      <created>1610508104149</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1610508104149</updated>
+      <workItem from="1610508105954" duration="1951000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="2398" y="210" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1610508172822">
+      <screen x="1920" y="0" width="2048" height="1112" />
+    </state>
+    <state x="2398" y="210" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1280.680/1920.0.2048.1112@1920.0.2048.1112" timestamp="1610508172822" />
+  </component>
+</project>

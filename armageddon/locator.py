@@ -1,5 +1,6 @@
 """Module dealing with postcode information."""
 
+from datetime import date
 import os
 import sys
 
@@ -68,12 +69,13 @@ def great_circle_distance(latlon1, latlon2):
                     np.sin(item_1[0]) * np.sin(item_2[0]) + np.cos(item_1[0]) * np.cos(item_2[0]) *
                     np.cos(np.abs(item_1[1] - item_2[1]))) * EARTH_RADIUS
     return distance
-print(great_circle_distance([[54.0, 0.0], [55, 0.0]], [55, 1.0]))
+
+
 class PostcodeLocator(object):
     """Class to interact with a postcode database file."""
 
-    def __init__(self, postcode_file='',
-                 census_file='',
+    def __init__(self, postcode_file='./armageddon/resources/full_postcodes.csv',
+                 census_file='./armageddon/resources/population_by_postcode_sector.csv',
                  norm=great_circle_distance):
         """
         Parameters
@@ -90,17 +92,19 @@ class PostcodeLocator(object):
             Python function defining the distance between points in latitude-longitude space.
 
         """
+        self.postcode_file = postcode_file
+        self.census_file = census_file
         self.norm = norm
 
     def get_postcodes_by_radius(self, X, radii, sector=False):
         """
-        Return (unit or sector) postcodes within specific distances of 
+        Return (unit or sector) postcodes within specific distances of
         input location.
 
         Parameters
         ----------
         X : arraylike
-            Latitude-longitude pair of centre location 
+            Latitude-longitude pair of centre location
         radii : arraylike
             array of radial distances from X
         sector : bool, optional
@@ -115,12 +119,60 @@ class PostcodeLocator(object):
         Examples
         --------
 
-        >>> locator = PostcodeLocator()
+        >>> locator = PostcodeLocator(postcode_file='./resources/full_postcodes.csv', census_file='./resources/population_by_postcode_sector.csv')
         >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.13e3])
-        >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.4e3, 0.2e3], True)                                                                   
+        [['SW7 2AZ', 'SW7 2BT', 'SW7 2BU', 'SW7 2DD', 'SW7 5HF', 'SW7 5HG', 'SW7 5HQ']]
+        >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.4e3, 0.2e3], True)
+        [['SW7 2', 'SW7 5', 'SW7 9'], ['SW7 9']]
         """
 
-        return [[]]
+        # Read the file, Data type conversion and prepare data.
+        df = pd.read_csv(self.postcode_file)
+
+        # units array(1D)
+        postcodes_array = df[['Postcode']].values.flatten()
+        # unit coordinates array list(2D)
+        coordinates_array = df[['Latitude', 'Longitude']].values.tolist()
+        X = list(X)
+
+        res = []
+        if not sector:
+            # for unit
+            # Calculate the distance for all postcodes.
+            distances = self.norm(coordinates_array, X)
+            # distance with X array(1D)
+            distances_array = distances.flatten()
+            for ra in radii:
+                list_ra = postcodes_array[distances_array < ra].tolist()
+                res.append(list_ra)
+        else:
+            # for sector
+
+            # method 1: average units distances as sector distance to X
+            # df['sector'] = df['Postcode'].str[0:5]
+            # distances = self.norm(coordinates_array, X)
+            # df['distance'] = pd.Series(distances.flatten().tolist())
+            # group = df.groupby('sector')
+            # data = group.mean()
+            # distances = data['distance'].values
+            # sector_array = np.array(data.index)
+            # for ra in radii:
+            #     list_ra = sector_array[distances < ra].tolist()
+            #     res.append(list_ra)
+
+            # method 2: average units coordinates as sector coordiante, and calculate distance to X
+            df['sector'] = df['Postcode'].str[0:5]
+            group = df.groupby('sector')
+            data = group.mean()
+
+            mean_coordinate = data.values.tolist()
+            distances = self.norm(mean_coordinate, X)
+            distances = distances.flatten()
+            sector_array = np.array(data.index)
+            for ra in radii:
+                list_ra = sector_array[distances < ra].tolist()
+                res.append(list_ra)
+        return res
 
     def get_population_of_postcode(self, postcodes, sector=False):
         """
@@ -129,7 +181,7 @@ class PostcodeLocator(object):
         Parameters
         ----------
         postcodes : list of lists
-            list of postcode units or postcode sectors 
+            list of postcode units or postcode sectors
         sector : bool, optional
             if true return populations for postcode sectors, otherwise postcode units
 
@@ -142,9 +194,42 @@ class PostcodeLocator(object):
         Examples
         --------
 
-        >>> locator = PostcodeLocator()
-        >>> locator.get_population_of_postcode([['SW7 2AZ','SW7 2BT','SW7 2BU','SW7 2DD']])
+        >>> locator = PostcodeLocator(postcode_file='./resources/full_postcodes.csv', census_file='./resources/population_by_postcode_sector.csv')
+        >>> locator.get_population_of_postcode([['SW7 2AZ', 'SW7 2BT', 'SW7 2BU', 'SW7 2DD'], ['SA8 3AB', 'SA8 3AD', 'SA8 3AE']])
+        [[18, 18, 18, 18], [44, 44, 44]]
         >>> locator.get_population_of_postcode([['SW7  2']], True)
+        [[2283]]
         """
+        census_df = pd.read_csv(self.census_file)
+        postcodes_df = pd.read_csv(self.postcode_file)
+        
 
-        return [[]]
+        res = []
+        for level in postcodes:
+            level_list = []
+            for postcode in level:
+                if sector:
+                    # 如果是sector，接受的是有空格的，而centus_df是有空格的，所以不需要操作，直接查找
+                    row_select = census_df[census_df['geography'] == postcode]
+                    population = row_select.iloc[0]['Variable: All usual residents; measures: Value'] if row_select.shape[0] > 0 else 0
+                else:
+                    # 如果是unit，需要先截取即得到sector, 输入的 unit postcode 是无空格的，需要先截取sector部分然后加空格才能在census查到
+                    sector_postcode_no_space = postcode[:-2]
+                    sector_postcode_add_space = sector_postcode_no_space[:4] + ' ' + sector_postcode_no_space[4:]
+                    # census_df里是有空格的,所以这里在census_df查不到，需要用加空格的sector_code
+                    row_select = census_df[census_df['geography'] == sector_postcode_add_space]
+                    if row_select.shape[0] > 0:
+                        population_in_sector = row_select.iloc[0]['Variable: All usual residents; measures: Value']
+                        # print(population_in_sector)
+                        # Here use the postcode in popluation to look up units in postcodes
+                        # 通过sector code来在postcodes文件里找，因为该文件postcodes都是无空格的，所以用无空格setor postcode查
+                        units_in_sector = postcodes_df[postcodes_df['Postcode'].str.contains(sector_postcode_no_space)]
+                        num_units = units_in_sector.shape[0]
+                        # print(num_units)
+                        # unit population: sector population / units number
+                        population = int(population_in_sector / num_units)
+                    else:
+                        population = 0
+                level_list.append(population)
+            res.append(level_list)
+        return res

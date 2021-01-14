@@ -1,6 +1,8 @@
 {
-    "python.pythonPath": "C:\\Users\\Claudia\\anaconda3\\python.exe",
     "python.linting.enabled": true,
-    "python.linting.flake8Enabled": false,
-    "python.linting.pylintEnabled": true
+    "python.linting.flake8Enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Args": ["--ignore=E226,E501,F401,W503,W504"],
+    "git.ignoreLimitWarning": true,
+    "python.pythonPath": "C:\\Users\\Claudia\\anaconda3\\python.exe"
 }
