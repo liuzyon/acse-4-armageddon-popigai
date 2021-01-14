@@ -7,7 +7,7 @@ import armageddon
 # Initialise the Planet class
 earth = armageddon.Planet(atmos_func='constant')
 
-# Solve the atmospheric entry problem (for something similar to Chelyabinsk). 
+# Solve the atmospheric entry problem (for something similar to Chelyabinsk).
 result = earth.solve_atmospheric_entry(radius=10, angle=20,
                                        strength=1e6, density=3000,
                                        velocity=19e3)
@@ -25,7 +25,7 @@ outcome = earth.analyse_outcome(result)
 #################
 
 # Calculate the blast location and damage radius for several pressure levels
-blast_lat, blast_lon, damage_rad = armageddon.damage_zones(outcome, 
+blast_lat, blast_lon, damage_rad = armageddon.damage_zones(outcome,
                                                            lat=51.2, lon=0.7, bearing=-35.,
                                                            pressures=[1e3, 3.5e3, 27e3, 43e3])
 

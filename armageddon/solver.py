@@ -193,7 +193,7 @@ class Planet():
         t_all = [t0]
         # dt0 = self.min_max_fact(dt, 1e-2)
         dt0 = 1e-2
-        result = dt/dt0
+        result = dt / dt0
         count = 0
 
         while y[1] >= 0 and y[3] >= 0:  # 可以更改，m=0 或者 z=0发生
