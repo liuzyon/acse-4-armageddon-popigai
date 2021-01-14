@@ -126,7 +126,7 @@ class PostcodeLocator(object):
         [['SW7 2', 'SW7 5', 'SW7 9'], ['SW7 9']]
         """
 
-        # Read the file, Data type conversion and prepare data.
+        # read the file, Data type conversion and prepare data.
         df = pd.read_csv(self.postcode_file)
 
         # units array(1D)
@@ -138,12 +138,14 @@ class PostcodeLocator(object):
         res = []
         if not sector:
             # for unit
-            # Calculate the distance for all postcodes.
+            # calculate the distance for all postcodes.
             distances = self.norm(coordinates_array, X)
-            # distance with X array(1D)
+            # distance with X array(1D: [1, 1])
             distances_array = distances.flatten()
             for ra in radii:
+                # for each radius, find out units in zone
                 list_ra = postcodes_array[distances_array < ra].tolist()
+                # current radius list added to all_radii_list
                 res.append(list_ra)
         else:
             # for sector
@@ -161,16 +163,25 @@ class PostcodeLocator(object):
             #     res.append(list_ra)
 
             # method 2: average units coordinates as sector coordiante, and calculate distance to X
+            # (much faster than method 1)
+
+            # add a new sector column in df and group by the value of this column.
             df['sector'] = df['Postcode'].str[0:5]
             group = df.groupby('sector')
-            data = group.mean()
 
+            # for each group(each sector), calculate the average as the sector coordinate
+            data = group.mean()
             mean_coordinate = data.values.tolist()
+
+            # calculate the distance with X for each average coordinate(sector coordinate).
             distances = self.norm(mean_coordinate, X)
             distances = distances.flatten()
             sector_array = np.array(data.index)
+
             for ra in radii:
+                # for each radius, find sectors in this zone
                 list_ra = sector_array[distances < ra].tolist()
+                # current radius list added to all_radii_list
                 res.append(list_ra)
         return res
 
@@ -202,30 +213,28 @@ class PostcodeLocator(object):
         """
         census_df = pd.read_csv(self.census_file)
         postcodes_df = pd.read_csv(self.postcode_file)
-        
 
         res = []
         for level in postcodes:
             level_list = []
             for postcode in level:
                 if sector:
-                    # 如果是sector，接受的是有空格的，而centus_df是有空格的，所以不需要操作，直接查找
+                    # for sector
+                    # postcodes input each has one extra space, which is same as the form in censtus, look up directly.
                     row_select = census_df[census_df['geography'] == postcode]
                     population = row_select.iloc[0]['Variable: All usual residents; measures: Value'] if row_select.shape[0] > 0 else 0
                 else:
-                    # 如果是unit，需要先截取即得到sector, 输入的 unit postcode 是无空格的，需要先截取sector部分然后加空格才能在census查到
+                    # for unit
+                    # postcodes input each not has one extra space, which is different with the form in censtus: obtain sector and add one extra space.
                     sector_postcode_no_space = postcode[:-2]
                     sector_postcode_add_space = sector_postcode_no_space[:4] + ' ' + sector_postcode_no_space[4:]
-                    # census_df里是有空格的,所以这里在census_df查不到，需要用加空格的sector_code
                     row_select = census_df[census_df['geography'] == sector_postcode_add_space]
                     if row_select.shape[0] > 0:
                         population_in_sector = row_select.iloc[0]['Variable: All usual residents; measures: Value']
-                        # print(population_in_sector)
-                        # Here use the postcode in popluation to look up units in postcodes
-                        # 通过sector code来在postcodes文件里找，因为该文件postcodes都是无空格的，所以用无空格setor postcode查
+                        # use sector to look up in full_postcodes.csv.
+                        # Because postcodes in full_postcodes.csv do not have one extra for each, use no_space sector to look up.
                         units_in_sector = postcodes_df[postcodes_df['Postcode'].str.contains(sector_postcode_no_space)]
                         num_units = units_in_sector.shape[0]
-                        # print(num_units)
                         # unit population: sector population / units number
                         population = int(population_in_sector / num_units)
                     else:
