@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import pandas as pd
 import numpy as np
+import operator
 
 from pytest import fixture, mark
 
@@ -175,23 +176,53 @@ def test_great_circle_distance(armageddon):
 
 def test_locator_postcodes(loc):
 
-    latlon = (52.2074, 0.1170)
-
-    result = loc.get_postcodes_by_radius(latlon, [0.2e3, 0.1e3])
+    latlon = (51.4981, -0.1773)
+    result = loc.get_postcodes_by_radius(latlon, [0.13e3])
+    expect = [['SW7 2AZ', 'SW7 2BT', 'SW7 2BU', 'SW7 2DD', 'SW7 5HF', 'SW7 5HG', 'SW7 5HQ']]
 
     assert type(result) is list
     if len(result) > 0:
         for element in result:
             assert type(element) is list
+
+    assert operator.eq(expect, result)
 
 
 def test_locator_sectors(loc):
 
-    latlon = (52.2074, 0.1170)
-
-    result = loc.get_postcodes_by_radius(latlon, [3.0e3, 1.5e3], True)
+    latlon = (51.4981, -0.1773)
+    result = loc.get_postcodes_by_radius(latlon, [0.4e3, 0.2e3], True)
+    expect = [['SW7 1', 'SW7 2', 'SW7 3', 'SW7 4', 'SW7 5', 'SW7 9'], ['SW7 1', 'SW7 2', 'SW7 3', 'SW7 4', 'SW7 5', 'SW7 9']]
 
     assert type(result) is list
     if len(result) > 0:
         for element in result:
             assert type(element) is list
+
+    assert operator.eq(expect, result)
+
+
+def test_population_units(loc):
+
+    result = loc.get_population_of_postcode([['SW7 2AZ', 'SW7 2BT', 'SW7 2BU', 'SW7 2DD'], ['SA8 3AB', 'SA8 3AD', 'SA8 3AE']])
+    expect = [[18, 18, 18, 18], [44, 44, 44]]
+
+    assert type(result) is list
+    if len(result) > 0:
+        for element in result:
+            assert type(element) is list
+
+    assert operator.eq(expect, result)
+
+
+def test_population_sectors(loc):
+
+    result = loc.get_population_of_postcode([['SW7  2']], True)
+    expect = [[2283]]
+
+    assert type(result) is list
+    if len(result) > 0:
+        for element in result:
+            assert type(element) is list
+
+    assert operator.eq(expect, result)
