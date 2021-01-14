@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
-import locator
+
+from armageddon import locator
+
 
 def p(r, E, z, p_t=0):
     """

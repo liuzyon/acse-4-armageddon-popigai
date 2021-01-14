@@ -202,7 +202,6 @@ class PostcodeLocator(object):
         """
         census_df = pd.read_csv(self.census_file)
         postcodes_df = pd.read_csv(self.postcode_file)
-        
 
         res = []
         for level in postcodes:

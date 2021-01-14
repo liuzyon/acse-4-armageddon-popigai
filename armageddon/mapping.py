@@ -50,7 +50,7 @@ def plot_results(burst_lat, burst_lon, blast_lat, blast_lon, radius_list, postco
         map = plot_circle(blast_lat, blast_lon, radius_list[i], i+1, map)
     # postcodes, population corresponding
     postcodes_df = pd.read_csv('./armageddon/resources/full_postcodes.csv')
-    
+
     if not sector:
         # plot units
         for i in range(len(postcodes)):
