@@ -1,8 +1,8 @@
 import armageddon
 
-#######################
-### Airburst Solver ###
-#######################
+###################
+# Airburst Solver #
+###################
 
 # Initialise the Planet class
 earth = armageddon.Planet(atmos_func='constant')
@@ -20,9 +20,9 @@ result = earth.calculate_energy(result)
 # Determine the outcomes of the impact event
 outcome = earth.analyse_outcome(result)
 
-#####################
-### Damage Mapper ###
-#####################
+#################
+# Damage Mapper #
+#################
 
 # Calculate the blast location and damage radius for several pressure levels
 blast_lat, blast_lon, damage_rad = armageddon.damage_zones(outcome, 

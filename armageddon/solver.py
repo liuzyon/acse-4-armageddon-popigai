@@ -154,12 +154,45 @@ class Planet():
                              'radius': vmtzxrs_Rk4[:-1, 5],
                              'time': t_all[:-1]})
 
+    def min_max_fact(self, a, b):
+        """
+        Return the largest factor of a that is <= b
+
+        >>> min_max_fact(0.015, 0.01)
+        >>> 0.005
+
+        >>> min_max_fact(0.09, 0.01)
+        >>> 0.01
+        """
+        # convert input to integer
+        i = 0
+        while int(a) != a and int(b) != b:
+            i += 1
+            a *= 10
+            b *= 10
+
+        if a % b == 0:
+            return b * 10**-i
+        b *= 10**-i
+
+        s = int(np.sqrt(a))
+        f_h, f_l = [], []
+        while s >= 1:
+            if a % s == 0:
+                f_l.append(s)
+                f_h.append(a / s)
+            s -= 1
+
+        f = np.array(f_h[::-1] + f_l) * 10**-i
+        return f[f < b][0]
+
     def Rk4(self, f, y0, t0, dt, strength, density):
         y = np.array(y0)
         t = np.array(t0)
         y_all = [y0]
         t_all = [t0]
-        dt0 = 0.01
+        # dt0 = self.min_max_fact(dt, 1e-2)
+        dt0 = 1e-2
         result = dt/dt0
         count = 0
 
@@ -198,32 +231,15 @@ class Planet():
 
     def f_analy(self, t, vmtzxrs, strength, density):
         f = np.zeros_like(vmtzxrs)
+
         v, m, theta, z, x, r = vmtzxrs
         A = np.pi * r ** 2
 
-        f[0] = (-self.Cd * self.rhoa(z) * A * (v ** 2)) / \
-            (2 * m) + self.g * np.sin(theta)
-        f[1] = -self.Ch * self.rhoa(z) * A * v ** 3 / (2 * self.Q)
+        f[0] = -self.Cd * self.rhoa(z) * A * v**2 / (2 * m)
         f[1] = 0
-        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * self.rhoa(z)
-                                               * A * v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
+        f[2] = 0
         f[3] = -v * np.sin(theta)
-        f[4] = v * np.cos(theta) / (1 + z / self.Rp)
-        f[5] = 0
-
-        return f
-        f = np.zeros_like(vmtzxrs)
-        v, m, theta, z, x, r = vmtzxrs
-        A = np.pi * r ** 2
-
-        f[0] = (-self.Cd * self.rhoa(z) * A * (v ** 2)) / \
-            (2 * m) + self.g * np.sin(theta)
-        f[1] = -self.Ch * self.rhoa(z) * A * v ** 3 / (2 * self.Q)
-        f[1] = 0
-        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * self.rhoa(z)
-                                               * A * v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
-        f[3] = -v * np.sin(theta)
-        f[4] = v * np.cos(theta) / (1 + z / self.Rp)
+        f[4] = v * np.cos(theta)
         f[5] = 0
 
         return f
@@ -280,7 +296,7 @@ class Planet():
 
         # get dedz column as a series
         dedz = result.loc[:, 'dedz']
-        if dedz.empty is True:
+        if dedz.empty:
             return outcome
         outcome['burst_peak_dedz'] = dedz.max()
 

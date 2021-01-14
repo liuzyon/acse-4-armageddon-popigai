@@ -14,8 +14,8 @@ def plot_circle(lat, lon, radius, level, map=None, **kwargs):
     lon: float
         longitude of circle to plot (degrees)
     radius: float
-        radius of circle to plot (m) 
-    map: folium.Map 
+        radius of circle to plot (m)
+    map: folium.Map
         existing map object
 
     Returns
@@ -32,7 +32,7 @@ def plot_circle(lat, lon, radius, level, map=None, **kwargs):
 
     if not map:
         map = folium.Map(location=[lat, lon], control_scale=True)
-    
+
     color_dict = {4: 'red', 3: 'purple', 2: 'blue', 1: 'green'}
     folium.Circle([lat, lon], radius, color=color_dict[level], fill_color=color_dict[level], fill=True, fillOpacity=0.8, **kwargs).add_to(map)
     return map
