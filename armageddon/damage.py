@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+import locator
 
 def p(r, E, z, p_t=0):
     """
@@ -230,5 +230,57 @@ def impact_risk(planet, means=fiducial_means, stdevs=fiducial_stdevs,
         the associated risk. These should be called ``postcode`` or ``sector``,
         and ``risk``.
     """
+    gaussian_param = {}
+    # generate parameters through Gaussian Distribution ramdomly
+    for key in fiducial_means:
+        gaussian_param[key] = np.random.normal(fiducial_means.get(key), fiducial_stdevs.get(key), nsamples)
 
-    return pd.DataFrame({'sector': '', 'risk': 0}, index=range(1))
+    postcode_all1 = []
+    for i in range(nsamples):
+        # Solve the system of differential equations for a given impact scenario
+        result = planet.solve_atmospheric_entry(radius=gaussian_param['radius'][i], angle=gaussian_param['angle'][i],
+                                                strength=gaussian_param['strength'][i],
+                                                density=gaussian_param['density'][i],
+                                                velocity=gaussian_param['velocity'][i])
+
+        result = planet.calculate_energy(result)  # calculate the kinetic energy lost per unit altitude
+        outcome = planet.analyse_outcome(result)  # calculate the impact and airburst stats
+        # Calculate surface zero location and the list of airblast damage radii
+        blast_lat, blast_lon, damage_rad = damage_zones(outcome, lat=gaussian_param['lat'][i],
+                                                        lon=gaussian_param['lon'][i],
+                                                        bearing=gaussian_param['bearing'][i],
+                                                        pressures=[pressure])
+        print(damage_rad)
+        my_postcodelocator = locator.PostcodeLocator()  # instance
+        # (unit or sector) postcodes within specific distances of input location
+        postcodes = my_postcodelocator.get_postcodes_by_radius([blast_lat, blast_lon], radii=damage_rad, sector=sector)
+        postcode_all1 += postcodes  # store total postcodes of samples
+    postcode_all2 = []
+    # change list of list to list
+    for item in postcode_all1:
+        postcode_all2 += item
+    index = set(postcode_all2)
+    for i in set(postcode_all2):
+        postcode_all2.count(i)  # calculate the postcode appearing times
+    probability = {}  # key is postcode/sector, value is probability
+    for i in index:
+        probability[i] = postcode_all2.count(i) / nsamples
+
+    # postcode/ postcode sectors that had been hit at least once inside the n times simulation
+    probability = {key: value for key, value in probability.items() if value != 0}
+    risk = []
+    sector = []
+    unit = []
+    for key in probability:
+        if sector:
+            # sector is true
+            sector += [key]
+        else:
+            unit += [key]
+        # calculate risk
+        risk += [probability[key] * my_postcodelocator.get_population_of_postcode([[key]], sector=sector)[-1][-1]]
+    if sector:
+        # sector is true
+        return pd.DataFrame({'sector': sector, 'risk': risk})
+    else:
+        return pd.DataFrame({'postcode': unit, 'risk': risk})
