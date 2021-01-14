@@ -195,29 +195,39 @@ class PostcodeLocator(object):
         --------
 
         >>> locator = PostcodeLocator(postcode_file='./resources/full_postcodes.csv', census_file='./resources/population_by_postcode_sector.csv')
-        >>> locator.get_population_of_postcode([['SW7 2AZ','SW7 2BT','SW7 2BU','SW7 2DD']])
-        [[0, 0, 0, 0]]
+        >>> locator.get_population_of_postcode([['SW7 2AZ', 'SW7 2BT', 'SW7 2BU', 'SW7 2DD'], ['SA8 3AB', 'SA8 3AD', 'SA8 3AE']])
+        [[18, 18, 18, 18], [44, 44, 44]]
         >>> locator.get_population_of_postcode([['SW7  2']], True)
         [[2283]]
         """
         census_df = pd.read_csv(self.census_file)
         postcodes_df = pd.read_csv(self.postcode_file)
+        
 
         res = []
         for level in postcodes:
             level_list = []
             for postcode in level:
                 if sector:
+                    # 如果是sector，接受的是有空格的，而centus_df是有空格的，所以不需要操作，直接查找
                     row_select = census_df[census_df['geography'] == postcode]
                     population = row_select.iloc[0]['Variable: All usual residents; measures: Value'] if row_select.shape[0] > 0 else 0
                 else:
-                    row_select = census_df[census_df['geography'] == postcode[0:5]]
+                    # 如果是unit，需要先截取即得到sector, 输入的 unit postcode 是无空格的，需要先截取sector部分然后加空格才能在census查到
+                    sector_postcode_no_space = postcode[:-2]
+                    sector_postcode_add_space = sector_postcode_no_space[:4] + ' ' + sector_postcode_no_space[4:]
+                    # census_df里是有空格的,所以这里在census_df查不到，需要用加空格的sector_code
+                    row_select = census_df[census_df['geography'] == sector_postcode_add_space]
                     if row_select.shape[0] > 0:
                         population_in_sector = row_select.iloc[0]['Variable: All usual residents; measures: Value']
-                        units_in_sector = postcodes_df['Postcode'].str.contains(postcode[0:5])
+                        # print(population_in_sector)
+                        # Here use the postcode in popluation to look up units in postcodes
+                        # 通过sector code来在postcodes文件里找，因为该文件postcodes都是无空格的，所以用无空格setor postcode查
+                        units_in_sector = postcodes_df[postcodes_df['Postcode'].str.contains(sector_postcode_no_space)]
                         num_units = units_in_sector.shape[0]
+                        # print(num_units)
                         # unit population: sector population / units number
-                        population = population_in_sector / num_units
+                        population = int(population_in_sector / num_units)
                     else:
                         population = 0
                 level_list.append(population)
