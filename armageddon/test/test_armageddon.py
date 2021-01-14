@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import pandas as pd
 import numpy as np
+import operator
 
 from pytest import fixture, mark
 
@@ -175,14 +176,15 @@ def test_great_circle_distance(armageddon):
 
 def test_locator_postcodes(loc):
 
-    latlon = (52.2074, 0.1170)
-
-    result = loc.get_postcodes_by_radius(latlon, [0.2e3, 0.1e3])
-
     assert type(result) is list
     if len(result) > 0:
         for element in result:
             assert type(element) is list
+
+    latlon1 = (51.4981, -0.1773)
+    result1 = loc.get_postcodes_by_radius(latlon1, [0.13e3])
+    expect1 = [['SW7 2AZ', 'SW7 2BT', 'SW7 2BU', 'SW7 2DD', 'SW7 5HF', 'SW7 5HG', 'SW7 5HQ']]
+    assert operator.eq(expect1, result1)
 
 
 def test_locator_sectors(loc):

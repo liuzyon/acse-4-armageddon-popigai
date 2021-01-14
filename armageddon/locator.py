@@ -123,7 +123,7 @@ class PostcodeLocator(object):
         >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.13e3])
         [['SW7 2AZ', 'SW7 2BT', 'SW7 2BU', 'SW7 2DD', 'SW7 5HF', 'SW7 5HG', 'SW7 5HQ']]
         >>> locator.get_postcodes_by_radius((51.4981, -0.1773), [0.4e3, 0.2e3], True)
-        [['SW7 2', 'SW7 5', 'SW7 9'], ['SW7 9']]
+        [['SW7 1', 'SW7 2', 'SW7 3', 'SW7 4', 'SW7 5', 'SW7 9'], ['SW7 1', 'SW7 2', 'SW7 3', 'SW7 4', 'SW7 5', 'SW7 9']]
         """
 
         # read the file, Data type conversion and prepare data.
@@ -167,20 +167,20 @@ class PostcodeLocator(object):
 
             # add a new sector column in df and group by the value of this column.
             df['sector'] = df['Postcode'].str[0:5]
-            group = df.groupby('sector')
 
+            units_coordinates = df[['Latitude', 'Longitude']].values.tolist()
+            distances = self.norm(units_coordinates, X)
+            distances = distances.flatten() # 一维numpy数组
+            df['distance'] = distances
+            group = df.groupby('sector')    # 按sector分组
             # for each group(each sector), calculate the average as the sector coordinate
-            data = group.mean()
-            mean_coordinate = data.values.tolist()
-
-            # calculate the distance with X for each average coordinate(sector coordinate).
-            distances = self.norm(mean_coordinate, X)
-            distances = distances.flatten()
+            data = group['distance'].min()
+            min_distances = data.values
             sector_array = np.array(data.index)
 
             for ra in radii:
                 # for each radius, find sectors in this zone
-                list_ra = sector_array[distances < ra].tolist()
+                list_ra = sector_array[min_distances < ra].tolist()
                 # current radius list added to all_radii_list
                 res.append(list_ra)
         return res
