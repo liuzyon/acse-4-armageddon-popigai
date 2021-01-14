@@ -99,9 +99,10 @@ def plot_results(burst_lat, burst_lon, blast_lat, blast_lon, radius_list, postco
         # plot sector
         for i in range(len(postcodes)):
             for j in range(len(postcodes[i])):
-                # sector postcode input has one extra space, eliminate it and look in full_postcodes.csv.
-                sector_postcode = postcodes[i][j][:4] + postcodes[i][j][5:]
-                units_in_sector = postcodes_df[postcodes_df['Postcode'].str.contains(sector_postcode)]
+                # sector postcode input may has one extra space, eliminate it and look in full_postcodes.csv.
+                if len(postcodes[i][j]) == 6:
+                    postcodes[i][j] = postcodes[i][j][:4] + postcodes[i][j][5:]
+                units_in_sector = postcodes_df[postcodes_df['Postcode'].str.contains(postcodes[i][j])]
                 # calculate the sector coordinate(average of units coordinates) as the sector marker on the map
                 marker_lat = units_in_sector['Latitude'].mean()
                 marker_lon = units_in_sector['Longitude'].mean()

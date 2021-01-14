@@ -210,7 +210,9 @@ class PostcodeLocator(object):
             for postcode in level:
                 if sector:
                     # for sector
-                    # postcodes input each has one extra space, which is same as the form in censtus, look up directly.
+                    # postcodes input each may not has one extra space, which is different with the form in censtus, add one space.
+                    if len(postcode) == 5:
+                        postcode = postcode[:4] + ' ' + postcode[4:]
                     row_select = census_df[census_df['geography'] == postcode]
                     population = row_select.iloc[0]['Variable: All usual residents; measures: Value'] if row_select.shape[0] > 0 else 0
                 else:
