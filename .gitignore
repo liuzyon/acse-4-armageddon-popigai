@@ -6,6 +6,5 @@
 .DS_Store
 .pytest_cache/
 acse4/
-armageddon/dev.py
 auxiliary/
 damage_map.html

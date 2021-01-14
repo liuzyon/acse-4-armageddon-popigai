@@ -158,44 +158,53 @@ class Planet():
                              'radius': vmtzxrs_Rk4[:-1, 5],
                              'time': t_all[:-1]})
 
-    def min_max_fact(self, a, b):
+    def choose_dt0(self, dt, dp=2):
         """
-        Return the largest factor of a that is <= b
+        Choose dt0 that dt is a multiple of it
+        but not larger than pre-set value
 
-        >>> min_max_fact(0.015, 0.01)
-        >>> 0.005
+        Parameters
+        ----------
+        dt: float
+            the output time-step
+        dp: int
+            the number of decimal place for pre-set dt0
 
-        >>> min_max_fact(0.09, 0.01)
+        Return
+        ------
+        dt0: float
+            the RK4 time-step
+
+        >>> choose_dt0(0.015, dp=2)
+        >>> 0.0075
+
+        >>> choose_dt0(0.09, dp=2)
         >>> 0.01
         """
-        # convert input to integer
-        i = 0
-        while int(a) != a and int(b) != b:
-            i += 1
-            a *= 10
-            b *= 10
+        # evaluate pre-set dt0
+        dt0 = 10**-dp
 
-        if a % b == 0:
-            return b * 10**-i
-        b *= 10**-i
+        # convert dt to integer
+        dt_copy = dt * 10**dp
+        while int(dt_copy) != dt_copy:
+            dp += 1
+            dt_copy *= 10
 
-        s = int(np.sqrt(a))
-        f_h, f_l = [], []
-        while s >= 1:
-            if a % s == 0:
-                f_l.append(s)
-                f_h.append(a / s)
-            s -= 1
+        # check dt is a multiple of dt0
+        if int(dt_copy) % int(dt0 * 10**dp) == 0:
+            return dt0
 
-        f = np.array(f_h[::-1] + f_l) * 10**-i
-        return f[f < b][0]
+        # half dt until smaller than dt0
+        while dt > dt0:
+            dt /= 2
+        return dt
 
     def Rk4(self, f, y0, t0, dt, strength, density):
         y = np.array(y0)
         t = np.array(t0)
         y_all = [y0]
         t_all = [t0]
-        dt0 = self.min_max_fact(dt, 1e-2)
+        dt0 = self.choose_dt0(dt)
         result = dt / dt0
         count = 0
 
