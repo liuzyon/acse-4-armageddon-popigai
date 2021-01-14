@@ -126,7 +126,7 @@ class PostcodeLocator(object):
         [['SW7 1', 'SW7 2', 'SW7 3', 'SW7 4', 'SW7 5', 'SW7 9'], ['SW7 1', 'SW7 2', 'SW7 3', 'SW7 4', 'SW7 5', 'SW7 9']]
         """
 
-        # read the file, Data type conversion and prepare data.
+        # read the file, data type conversion and prepare data.
         df = pd.read_csv(self.postcode_file)
 
         # units array(1D)
@@ -150,36 +150,26 @@ class PostcodeLocator(object):
         else:
             # for sector
 
-            # method 1: average units distances as sector distance to X
-            # df['sector'] = df['Postcode'].str[0:5]
-            # distances = self.norm(coordinates_array, X)
-            # df['distance'] = pd.Series(distances.flatten().tolist())
-            # group = df.groupby('sector')
-            # data = group.mean()
-            # distances = data['distance'].values
-            # sector_array = np.array(data.index)
-            # for ra in radii:
-            #     list_ra = sector_array[distances < ra].tolist()
-            #     res.append(list_ra)
-
-            # method 2: average units coordinates as sector coordiante, and calculate distance to X
-            # (much faster than method 1)
-
             # add a new sector column in df and group by the value of this column.
             df['sector'] = df['Postcode'].str[0:5]
 
             units_coordinates = df[['Latitude', 'Longitude']].values.tolist()
             distances = self.norm(units_coordinates, X)
-            distances = distances.flatten() # 一维numpy数组
+            distances = distances.flatten()
             df['distance'] = distances
-            group = df.groupby('sector')    # 按sector分组
-            # for each group(each sector), calculate the average as the sector coordinate
+
+            # group by sector
+            group = df.groupby('sector')
+            # for each group(each sector), calculate the min unit distance
             data = group['distance'].min()
             min_distances = data.values
+
+            # array of sectors
             sector_array = np.array(data.index)
 
             for ra in radii:
                 # for each radius, find sectors in this zone
+                # If at least one unit in one sector is within this zone, this sector is within this zone.
                 list_ra = sector_array[min_distances < ra].tolist()
                 # current radius list added to all_radii_list
                 res.append(list_ra)

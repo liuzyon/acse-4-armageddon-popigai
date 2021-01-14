@@ -93,21 +93,21 @@ def plot_results(burst_lat, burst_lon, blast_lat, blast_lon, radius_list, postco
                 marker_lon = row_select.iloc[0]['Longitude']
                 # plot the unit markers.
                 folium.Marker([marker_lat, marker_lon],
-                              popup='Unit: ' + postcodes[i][j] + '<br>All usual residents: ' + str(population[i][j]),
+                              popup='Unit:<br>' + postcodes[i][j] + '<br><br>All usual residents:<br>' + str(population[i][j]),
                               tooltip="Click me!").add_to(map)
     else:
-        # plot sectors
+        # plot sector
         for i in range(len(postcodes)):
             for j in range(len(postcodes[i])):
                 # sector postcode input has one extra space, eliminate it and look in full_postcodes.csv.
                 sector_postcode = postcodes[i][j][:4] + postcodes[i][j][5:]
                 units_in_sector = postcodes_df[postcodes_df['Postcode'].str.contains(sector_postcode)]
-                # calculate the sector coordinate(average of units coordinates)
+                # calculate the sector coordinate(average of units coordinates) as the sector marker on the map
                 marker_lat = units_in_sector['Latitude'].mean()
                 marker_lon = units_in_sector['Longitude'].mean()
                 # plot the sector markers.
                 folium.Marker([marker_lat, marker_lon],
-                              popup='Sector: ' + postcodes[i][j] + '<br>All usual residents: ' + str(population[i][j]),
+                              popup='Sector:<br>' + postcodes[i][j] + '<br><br>All usual residents:<br>' + str(population[i][j]),
                               tooltip="Click me!").add_to(map)
     # save the map.
     map.save("index.html")
