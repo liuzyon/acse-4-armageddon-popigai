@@ -9,6 +9,7 @@ Created on Wed Jan 13 01:13:54 2021
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import data
 
 
 class Planet():
@@ -73,16 +74,12 @@ class Planet():
         self.g = g
         self.H = H
         self.rho0 = rho0
-        self.df = None
 
         # set function to define atmoshperic density
         if atmos_func == 'exponential':
             self.rhoa = lambda z: rho0 * np.exp(-z / H)
         elif atmos_func == 'tabular':
-            self.df = pd.read_csv('data/AltitudeDensityTable.csv',
-                                  sep=' ', skiprows=6,
-                                  names=['Altitude', 'Density', 'Height'])
-            self.rhoa = lambda z: self.cal_rho_a(z)
+            self.rhoa = lambda z: self.extension1(z)
         elif atmos_func == 'constant':
             self.rhoa = lambda x: rho0
         else:
@@ -136,7 +133,7 @@ class Planet():
         """
 
         # Enter your code here to solve the differential equations
-        # 角度制转弧度制
+        # change degrees to radians
         if radians:
             theta0 = angle
         else:
@@ -152,7 +149,7 @@ class Planet():
 
         return pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1, 0],
                              'mass': vmtzxrs_Rk4[:-1, 1],
-                             'angle': vmtzxrs_Rk4[:-1, 2]*180/np.pi,
+                             'angle': vmtzxrs_Rk4[:-1, 2] * 180 / np.pi,
                              'altitude': vmtzxrs_Rk4[:-1, 3],
                              'distance': vmtzxrs_Rk4[:-1, 4],
                              'radius': vmtzxrs_Rk4[:-1, 5],
@@ -162,11 +159,11 @@ class Planet():
         """
         Return the largest factor of a that is <= b
 
-        >>> min_max_fact(0.015, 0.01)
-        >>> 0.005
+        >>> min_max_fact(0.0015, 0.001)
+        >>> 0.0005
 
-        >>> min_max_fact(0.09, 0.01)
-        >>> 0.01
+        >>> min_max_fact(0.009, 0.001)
+        >>> 0.001
         """
         # convert input to integer
         i = 0
@@ -195,7 +192,7 @@ class Planet():
         t = np.array(t0)
         y_all = [y0]
         t_all = [t0]
-        dt0 = self.min_max_fact(dt, 1e-2)
+        dt0 = self.min_max_fact(dt, 1e-3)
         result = dt / dt0
         count = 0
 
@@ -247,27 +244,34 @@ class Planet():
 
         return f
 
-    def cal_rho_a(self, z):
-        """
-        evaluation atmosphere density from tabular
+    # using the method of bisection to seach dataframe quickly
+    def extension1(self, s):
+        df = pd.read_csv('data/AltitudeDensityTable.csv', sep=' ', skiprows=6,
+                         names=['Altitude', 'Density', 'Height'])
+        data = df['Altitude'].tolist()
+        low = 0
+        high = len(data)
 
-        Parameters
-        ----------
-        z: number
-            the evaluation altitude
+        while low < high:
+            mid = int((low + high) / 2)
+            if data[mid] < s:
+                low = mid + 1
+            else:
+                high = mid
 
-        Return
-        ------
-        rho_a: float
-            the evaluated atmosphere density
+        if s <= data[0]:
+            x = -1
+            y = -1
+            z = -1
+        elif s >= data[-1]:
+            t = len(data) - 1
+            x, y, z = df.iloc[-1]
+        elif s > data[high]:
+            x, y, z = df.iloc[high]
+        else:
+            x, y, z = df.iloc[high - 1]
 
-        >>> cal_rho_a(0)
-        >>> 1.225
-        >>> cal_rho_a(100000)
-        >>> 4.365910282319956e-07
-        """
-        z_i, rho_i, H_i = self.df.iloc[min(8600, int(z / 10.))]
-        return rho_i * np.exp((z_i-z) / H_i)
+        return y * np.exp((x - s) / z)
 
     def calculate_energy(self, result):
         """
@@ -354,8 +358,6 @@ class Planet():
         return outcome
 
     def plot(self, result):
-        # 我们用result来自calculate_energy
-        # 需要在jupyter notebook上展示给客户。
         result = result.copy()
         t_list = result['time'].tolist()
         v_list = result['velocity'].tolist()
