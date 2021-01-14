@@ -116,7 +116,7 @@ def test_analytical_solution(armageddon):
 
     angle_analytical = 20 * np.pi / 180
     angle = result.loc[:, 'angle']
-    assert np.allclose(angle_analytical, angle)
+    assert np.allclose(20, angle)
 
     radius = result.loc[:, 'radius']
     assert np.allclose(10, radius)
