@@ -238,6 +238,7 @@ def impact_risk(planet, means=fiducial_means, stdevs=fiducial_stdevs,
         gaussian_param[key] = np.random.normal(fiducial_means.get(key), fiducial_stdevs.get(key), nsamples)
 
     postcode_all1 = []
+    my_postcodelocator = None
     for i in range(nsamples):
         # Solve the system of differential equations for a given impact scenario
         result = planet.solve_atmospheric_entry(radius=gaussian_param['radius'][i], angle=gaussian_param['angle'][i],
