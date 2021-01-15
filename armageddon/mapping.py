@@ -39,16 +39,16 @@ def plot_circle(lat, lon, radius, level, map=None, **kwargs):
     return map
 
 
-def plot_results(burst_lat, burst_lon, blast_lat, blast_lon, radius_list, postcodes, population, sector=False):
+def plot_results(entry_lat, entry_lon, blast_lat, blast_lon, radius_list, postcodes, population, sector=False):
     """
     Plot all the results on a map.
 
     Parameters
     ----------
 
-    burst_lat: float
+    entry_lat: float
         latitude of entry point (degrees)
-    burst_lon: float
+    entry_lon: float
         longitude of entry point (degrees)
     blast_lat: float
         latitude of surface zero point (degrees)
@@ -71,10 +71,24 @@ def plot_results(burst_lat, burst_lon, blast_lat, blast_lon, radius_list, postco
 
     # according to entry point and surface zero point, plot the flight path.
     folium.PolyLine([
-                    [burst_lat, burst_lon],
+                    [entry_lat, entry_lon],
                     [blast_lat, blast_lon]
                     ], color='black').add_to(map)
     radius_list.sort(reverse=True)
+
+    # plot the entry point marker.
+    folium.Marker([entry_lat, entry_lon],
+                  popup='Entry Point: (' + str(entry_lat) + ', ' + str(entry_lon) + ')',
+                  icon=folium.Icon(color="green", icon="info-sign"),
+                  tooltip="Click me!").add_to(map)
+
+    # plot the blast point marker.
+    folium.Marker([blast_lat, blast_lon],
+                  popup='Entry Point: (' + str(blast_lat) + ', ' + str(blast_lon) + ')',
+                  icon=folium.Icon(color="red", icon="info-sign"),
+                  tooltip="Click me!").add_to(map)
+
+    # plot the blast point marker.
 
     # for each radius level, plot the corresponding circle. (plot order: from low level to high level)
     for i in range(len(radius_list)):
