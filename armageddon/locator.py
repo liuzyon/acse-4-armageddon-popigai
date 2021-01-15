@@ -129,18 +129,18 @@ class PostcodeLocator(object):
         # read the file, data type conversion and prepare data.
         df = pd.read_csv(self.postcode_file)
 
-        # units array(1D)
-        postcodes_array = df[['Postcode']].values.flatten()
-        # unit coordinates array list(2D)
-        coordinates_array = df[['Latitude', 'Longitude']].values.tolist()
         X = list(X)
 
         res = []
         if not sector:
             # for unit
+            # units array(1D)
+            postcodes_array = df[['Postcode']].values.flatten()
+            # unit coordinates array list(2D)
+            coordinates_array = df[['Latitude', 'Longitude']].values.tolist()
             # calculate the distance for all postcodes.
             distances = self.norm(coordinates_array, X)
-            # distance with X array(1D: [1, 1])
+            # distance with X array(1D: [1, ])
             distances_array = distances.flatten()
             for ra in radii:
                 # for each radius, find out units in zone
