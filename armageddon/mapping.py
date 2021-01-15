@@ -68,6 +68,7 @@ def plot_results(entry_lat, entry_lon, blast_lat, blast_lon, radius_list, postco
 
     """
     map = folium.Map(location=[blast_lat, blast_lon], control_scale=True)
+    map.add_child(folium.LatLngPopup())
 
     # according to entry point and surface zero point, plot the flight path.
     folium.PolyLine([
