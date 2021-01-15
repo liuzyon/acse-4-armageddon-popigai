@@ -175,6 +175,8 @@ class Planet():
         dt0: float
             the RK4 time-step
 
+        Examples
+        --------
         >>> choose_dt0(0.015, dp=2)
         >>> 0.0075
 
@@ -384,8 +386,7 @@ class Planet():
             the key ``outcome`` (which should contain one of the following strings:
             ``Airburst``, ``Cratering`` or ``Airburst and cratering``), as well as
             the following keys:
-            ``burst_peak_dedz``, ``burst_altitude``, ``burst_distance``,
-             ``burst_energy``
+            ``burst_peak_dedz``, ``burst_altitude``, ``burst_distance``, ``burst_energy``
         """
 
         outcome = {'outcome': 'Unknown',

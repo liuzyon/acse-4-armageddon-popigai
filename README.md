@@ -2,6 +2,12 @@
 
 This is a very brief Readme to familiarise you with how to install and run the tool you will develop. You should expand and elaborate on this in your final version.
 
+## Usage
+
+python notebook `interface.ipynb` is used as the user interface
+
+a detailed usage handbook and description for all functions are documented as `HTML` file in `html/index.html`
+
 ## Installation
 
 To install the module and any pre-requisites
