@@ -95,6 +95,7 @@ def plot_results(entry_lat, entry_lon, blast_lat, blast_lon, radius_list, postco
     for i in range(len(radius_list)):
         map = plot_circle(blast_lat, blast_lon, radius_list[i], i+1, map)
 
+    # plot the units or sectors marker if need.
     if postcodes is not None:
         # read the full_postcodes.csv
         postcodes_df = pd.read_csv('./armageddon/resources/full_postcodes.csv')
