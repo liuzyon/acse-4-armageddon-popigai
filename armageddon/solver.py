@@ -422,3 +422,93 @@ class Planet():
         axs[6].legend(loc='best', fontsize=14)
 
         plt.show()
+
+    def extension2(self):
+        # find best fitted parameter
+        data = pd.read_csv('./data/ChelyabinskEnergyAltitude.csv')
+        data.rename(columns={'Height (km)': 'altitude', 'Energy Per Unit Length (kt Km^-1)': 'dedz'}, inplace=True)
+        data_peak_dedz = data['dedz'].max()
+        max_index = data['dedz'].idxmax()
+        data_burst_altitude = data.loc[max_index, 'altitude'] * 1e3  # unit m
+        print('exact burst altitude and peak dedz:')
+        print([data_burst_altitude, data_peak_dedz])
+
+        # guess a initial strength and raduis
+        strength = 1e6  # N/m^2
+        radius = 20
+        # specified parameters
+        velocity = 1.92e4  # m/s
+        density = 3300  # kg/m 3
+        angle = 18.3  # degrees
+
+        raduis_all = []
+        strength_all = []
+        altitude_all = []
+        dedz_all = []
+        err1_all = []
+        err2_all = []
+        err_all = []
+        raduis_all.append(radius)
+        strength_all.append(strength)
+        error2 = 1000
+        while error2 > 1:
+            # reduce error2
+            result = self.solve_atmospheric_entry(
+                radius, velocity, density, strength, angle,
+                init_altitude=43e3, dt=0.05, radians=False)
+            result = self.calculate_energy(result)
+            X = result['altitude'] / 1000  # km
+            Y = result['dedz']
+            altitude_all.append(X)
+            dedz_all.append(Y)
+            outcome = self.analyse_outcome(result)
+            error1 = np.abs(outcome['burst_altitude'] - data_burst_altitude) / 1000
+            error2 = np.abs(outcome['burst_peak_dedz'] - data_peak_dedz)
+            error = error1 + error2
+            err1_all.append(error1)
+            err2_all.append(error2)
+            err_all.append(error)
+            print('error1:')
+            print(error1)
+            print('error2:')
+            print(error2)
+            print('present fitted burst_altitude and burst peak dedz:')
+            print([outcome['burst_altitude'], outcome['burst_peak_dedz']])
+
+            # narrow error2 also will change error1
+            if outcome['burst_peak_dedz'] > data_peak_dedz:
+                if error2 > 20:
+                    # when error2 is large, step of radius is large too
+                    radius -= 0.5
+                else:
+                    radius -= 0.1
+                    strength -= 200
+            else:
+                if error2 > 20:
+                    # when error2 is large, step of radius is large too
+                    radius += 0.5
+                else:
+                    radius += 0.1
+                    strength += 200
+            raduis_all.append(radius)
+            strength_all.append(strength)
+        print('min error:')
+        min_error = np.min(err_all)
+        print(min_error)
+        min_error_index = err_all.index(min_error)
+
+        final_radius = raduis_all[min_error_index]
+        final_strength = strength_all[min_error_index]
+        print('radius')  # final best fitted parameter
+        print(final_radius)
+        print('strength')  # final best fitted parameter
+        print(final_strength)
+        final_altitude = altitude_all[min_error_index]
+        final_dedz = dedz_all[min_error_index]
+        # plot exact energy deposition curve vis fitted curve
+        plt.plot(final_altitude, final_dedz, '.', label='fitted energy deposition curve')
+        plt.plot(data['altitude'], data['dedz'], '*', label='exact energy deposition curve')
+        plt.xlabel('altitude(m)')
+        plt.ylabel('Energy Per Unit Length (kt Km^-1)')
+        plt.legend()
+        plt.show()
