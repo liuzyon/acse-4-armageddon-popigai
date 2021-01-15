@@ -134,13 +134,9 @@ class Planet():
             'velocity', 'mass', 'angle', 'altitude',
             'distance', 'radius', 'time'
         """
-
-        # Enter your code here to solve the differential equations
-        # 角度制转弧度制
-        if radians:
-            theta0 = angle
-        else:
-            theta0 = angle * np.pi / 180
+        # change to radian if input is angle
+        if not radians:
+            theta0 = np.radians(angle)
 
         mass = 4 / 3 * density * np.pi * radius**3
         t0 = 0
@@ -150,9 +146,13 @@ class Planet():
         # analytic
         # vmtzxrs_Rk4, t_all = self.Rk4(self.f_analy, vmtzxr0, t0, dt, strength, density)
 
+        # change to angle if input is angle
+        if not radians:
+            vmtzxrs_Rk4_angle = np.degrees(vmtzxrs_Rk4[:-1, 2])
+
         return pd.DataFrame({'velocity': vmtzxrs_Rk4[:-1, 0],
                              'mass': vmtzxrs_Rk4[:-1, 1],
-                             'angle': vmtzxrs_Rk4[:-1, 2]*180/np.pi,
+                             'angle': vmtzxrs_Rk4_angle,
                              'altitude': vmtzxrs_Rk4[:-1, 3],
                              'distance': vmtzxrs_Rk4[:-1, 4],
                              'radius': vmtzxrs_Rk4[:-1, 5],
@@ -204,54 +204,116 @@ class Planet():
         return dt
 
     def Rk4(self, f, y0, t0, dt, strength, density):
-        y = np.array(y0)
-        t = np.array(t0)
+        """
+        An RK4 implementation on the ODE system
+
+        Parameters
+        ----------
+        f: function
+            the ODE system that evaluate (velocity, mass, angle, altitude, distance, radius)
+        y0: array-like
+            the initial value of (velocity, mass, angle, altitude, distance, radius)
+        t0: float
+            the initial value of time
+        dt: float
+            the OUTPUT time-step
+        strength, density: the same as solve_atmospheric_entry()
+
+        Returns
+        -------
+        y: array-like
+            the value of (velocity, mass, angle, altitude, distance, radius) at each OUTPUT time-step
+        t: array-like
+            all corresponding OUTPUT time-steps
+        """
+        # put initial value in
         y_all = [y0]
         t_all = [t0]
+
+        # choose dt0 based on input dt
         dt0 = self.choose_dt0(dt)
-        result = dt / dt0
+
+        # find ratio and initial counter
+        result = int(dt / dt0)
         count = 0
 
-        while y[1] >= 0 and y[3] >= 0 and y[2] > 0:
+        # termination conditions (OR):
+        #     mass < 0
+        #     altitude < 0
+        #     angle <= 0
+        while y0[1] >= 0 and y0[2] > 0 and y0[3] >= 0:
+            # increment counter
             count += 1
-            k1 = dt0 * f(t, y, strength, density)
-            k2 = dt0 * f(t + 0.5 * dt0, y + 0.5 * k1, strength, density)
-            k3 = dt0 * f(t + 0.5 * dt0, y + 0.5 * k2, strength, density)
-            k4 = dt0 * f(t + dt0, y + k3, strength, density)
-            y = y + (1. / 6.) * (k1 + 2 * k2 + 2 * k3 + k4)
-            t = t + dt0
 
-            if count % result == 0.0:
-                y_all.append(y)
-                t_all.append(t)
+            # evaluate four stages
+            k1 = dt0 * f(y0, strength, density)
+            k2 = dt0 * f(y0 + 0.5 * k1, strength, density)
+            k3 = dt0 * f(y0 + 0.5 * k2, strength, density)
+            k4 = dt0 * f(y0 + k3, strength, density)
+
+            # update y0 and t0
+            y0 = (y0 + (1. / 6.) * (k1 + 2 * k2 + 2 * k3 + k4)).copy()
+            t0 += dt0
+
+            # write y0 and t0 to return if count is multiple of result
+            if count % result == 0:
+                y_all.append(y0)
+                t_all.append(t0)
 
         return np.array(y_all), np.array(t_all)
 
-    def f(self, t, vmtzxrs, strength, density):
+    def f(self, vmtzxrs, strength, density):
+        """
+        compute ODE system and d(radius)/dt
+
+        Parameters
+        ----------
+        vmtzxrs: array-like
+            the value of (velocity, mass, angle, altitude, distance, radius) in a list
+        strength, density: the same as solve_atmospheric_entry()
+
+        Return
+        ------
+        f: array-like
+            the value of time derivative for each of (velocity, mass, angle, altitude, distance, radius) in a list
+        """
         f = np.zeros_like(vmtzxrs)
+
+        # unpack input value
         v, m, theta, z, x, r = vmtzxrs
-        A = np.pi * r ** 2
+
+        # pre-compute values
         rhoa = self.rhoa(z)
-        f[0] = (-self.Cd * rhoa * A * (v ** 2)) / \
-            (2 * m) + self.g * np.sin(theta)
-        f[1] = -self.Ch * self.rhoa(z) * A * v ** 3 / (2 * self.Q)
-        f[2] = (self.g * np.cos(theta) / v) - (self.Cl * rhoa * A *
-                                               v / (2 * m)) - (v * np.cos(theta) / (self.Rp + z))
+        rhoa_A = rhoa * np.pi * r ** 2
+        m_2 = 2 * m
+
+        # evaluate ODE system
+        f[0] = -self.Cd * rhoa_A * v**2 / m_2 + self.g * np.sin(theta)
+        f[1] = -self.Ch * rhoa_A * v**3 / (2 * self.Q)
+        f[2] = (self.g * np.cos(theta) / v
+                - self.Cl * rhoa_A * v / m_2
+                - v * np.cos(theta) / (self.Rp + z))
         f[3] = -v * np.sin(theta)
         f[4] = v * np.cos(theta) / (1 + z / self.Rp)
+
+        # compute d(radius)/dt
         if rhoa * v**2 < strength:
             f[5] = 0
         else:
-            f[5] = np.sqrt(7 / 2 * self.alpha * rhoa / density) * v
+            f[5] = np.sqrt(3.5 * self.alpha * rhoa / density) * v
         return f
 
-    def f_analy(self, t, vmtzxrs, strength, density):
+    def f_analy(self, vmtzxrs, strength, density):
+        """
+        compute ODE system and d(radius)/dt with simplifying assumptions
+
+        Parameters and Return are the same as f()
+        """
         f = np.zeros_like(vmtzxrs)
 
         v, m, theta, z, x, r = vmtzxrs
-        A = np.pi * r ** 2
 
-        f[0] = -self.Cd * self.rhoa(z) * A * v**2 / (2 * m)
+        f[0] = -self.Cd * self.rhoa(z) * np.pi * r ** 2 * v**2 / (2 * m)
         f[1] = 0
         f[2] = 0
         f[3] = -v * np.sin(theta)
@@ -365,69 +427,3 @@ class Planet():
             else:
                 outcome['outcome'] = 'Airburst and cratering'
         return outcome
-
-    def plot(self, result):
-        # 我们用result来自calculate_energy
-        # 需要在jupyter notebook上展示给客户。
-        result = result.copy()
-        t_list = result['time'].tolist()
-        v_list = result['velocity'].tolist()
-        m_list = result['mass'].tolist()
-        an_list = result['angle'].tolist()
-        al_list = result['altitude'].tolist()
-        d_list = result['distance'].tolist()
-        r_list = result['radius'].tolist()
-        e_list = result['dedz'].tolist()
-
-        fig, axs = plt.subplots(7, 1, figsize=(8, 12))
-        fig.tight_layout(w_pad=5, h_pad=5)
-        axs[0].plot(t_list, v_list, 'b', label='velocity')
-        axs[0].set_xlabel(r'$t$', fontsize=14)
-        axs[0].set_ylabel(r'$value$', fontsize=14)
-        axs[0].set_title('plot of asteroid speed changes ', fontsize=14)
-        axs[0].grid(True)
-        axs[0].legend(loc='best', fontsize=14)
-
-        axs[1].plot(t_list, m_list, 'b', label='mass')
-        axs[1].set_xlabel(r'$t$', fontsize=14)
-        axs[1].set_ylabel(r'$value$', fontsize=14)
-        axs[1].set_title('plot of asteroid mass changes', fontsize=14)
-        axs[1].grid(True)
-        axs[1].legend(loc='best', fontsize=14)
-
-        axs[2].plot(t_list, an_list, 'b', label='angle')
-        axs[2].set_xlabel(r'$t$', fontsize=14)
-        axs[2].set_ylabel(r'$value$', fontsize=14)
-        axs[2].set_title('plot of asteroid angle changes', fontsize=14)
-        axs[2].grid(True)
-        axs[2].legend(loc='best', fontsize=14)
-
-        axs[3].plot(t_list, al_list, 'b', label='altitude')
-        axs[3].set_xlabel(r'$t$', fontsize=14)
-        axs[3].set_ylabel(r'$value$', fontsize=14)
-        axs[3].set_title('plot of asteroid altitude changes', fontsize=14)
-        axs[3].grid(True)
-        axs[3].legend(loc='best', fontsize=14)
-
-        axs[4].plot(t_list, d_list, 'b', label='distance')
-        axs[4].set_xlabel(r'$t$', fontsize=14)
-        axs[4].set_ylabel(r'$value$', fontsize=14)
-        axs[4].set_title('plot of asteroid distance changes', fontsize=14)
-        axs[4].grid(True)
-        axs[4].legend(loc='best', fontsize=14)
-
-        axs[5].plot(t_list, r_list, 'b', label='radius')
-        axs[5].set_xlabel(r'$t$', fontsize=14)
-        axs[5].set_ylabel(r'$value$', fontsize=14)
-        axs[5].set_title('plot of asteroid radius changes', fontsize=14)
-        axs[5].grid(True)
-        axs[5].legend(loc='best', fontsize=14)
-
-        axs[6].plot(t_list, e_list, 'b', label='energy')
-        axs[6].set_xlabel(r'$t$', fontsize=14)
-        axs[6].set_ylabel(r'$value$', fontsize=14)
-        axs[6].set_title('plot of asteroid energy changes', fontsize=14)
-        axs[6].grid(True)
-        axs[6].legend(loc='best', fontsize=14)
-
-        plt.show()
