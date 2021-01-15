@@ -19,7 +19,7 @@ class Planet():
     """
 
     def __init__(self, atmos_func='exponential', atmos_filename=None,
-                 Cd=1., Ch=0.1, Q=1e7, Cl=0, alpha=0.3, Rp=6371e3,
+                 Cd=1., Ch=0.1, Q=1e7, Cl=1e-3, alpha=0.3, Rp=6371e3,
                  g=9.81, H=8000., rho0=1.2):
         """
         Set up the initial parameters and constants for the target planet
@@ -79,7 +79,7 @@ class Planet():
         if atmos_func == 'exponential':
             self.rhoa = lambda z: rho0 * np.exp(-z / H)
         elif atmos_func == 'tabular':
-            self.df = pd.read_csv('data/AltitudeDensityTable.csv',
+            self.df = pd.read_csv(atmos_filename,
                                   sep=' ', skiprows=6,
                                   names=['Altitude', 'Density', 'Height'])
             self.rhoa = lambda z: self.cal_rho_a(z)
