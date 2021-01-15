@@ -136,7 +136,7 @@ class Planet():
         """
 
         # Enter your code here to solve the differential equations
-        # 角度制转弧度制
+        # degrees to radians
         if radians:
             theta0 = angle
         else:
@@ -366,68 +366,3 @@ class Planet():
                 outcome['outcome'] = 'Airburst and cratering'
         return outcome
 
-    def plot(self, result):
-        # 我们用result来自calculate_energy
-        # 需要在jupyter notebook上展示给客户。
-        result = result.copy()
-        t_list = result['time'].tolist()
-        v_list = result['velocity'].tolist()
-        m_list = result['mass'].tolist()
-        an_list = result['angle'].tolist()
-        al_list = result['altitude'].tolist()
-        d_list = result['distance'].tolist()
-        r_list = result['radius'].tolist()
-        e_list = result['dedz'].tolist()
-
-        fig, axs = plt.subplots(7, 1, figsize=(8, 12))
-        fig.tight_layout(w_pad=5, h_pad=5)
-        axs[0].plot(t_list, v_list, 'b', label='velocity')
-        axs[0].set_xlabel(r'$t$', fontsize=14)
-        axs[0].set_ylabel(r'$value$', fontsize=14)
-        axs[0].set_title('plot of asteroid speed changes ', fontsize=14)
-        axs[0].grid(True)
-        axs[0].legend(loc='best', fontsize=14)
-
-        axs[1].plot(t_list, m_list, 'b', label='mass')
-        axs[1].set_xlabel(r'$t$', fontsize=14)
-        axs[1].set_ylabel(r'$value$', fontsize=14)
-        axs[1].set_title('plot of asteroid mass changes', fontsize=14)
-        axs[1].grid(True)
-        axs[1].legend(loc='best', fontsize=14)
-
-        axs[2].plot(t_list, an_list, 'b', label='angle')
-        axs[2].set_xlabel(r'$t$', fontsize=14)
-        axs[2].set_ylabel(r'$value$', fontsize=14)
-        axs[2].set_title('plot of asteroid angle changes', fontsize=14)
-        axs[2].grid(True)
-        axs[2].legend(loc='best', fontsize=14)
-
-        axs[3].plot(t_list, al_list, 'b', label='altitude')
-        axs[3].set_xlabel(r'$t$', fontsize=14)
-        axs[3].set_ylabel(r'$value$', fontsize=14)
-        axs[3].set_title('plot of asteroid altitude changes', fontsize=14)
-        axs[3].grid(True)
-        axs[3].legend(loc='best', fontsize=14)
-
-        axs[4].plot(t_list, d_list, 'b', label='distance')
-        axs[4].set_xlabel(r'$t$', fontsize=14)
-        axs[4].set_ylabel(r'$value$', fontsize=14)
-        axs[4].set_title('plot of asteroid distance changes', fontsize=14)
-        axs[4].grid(True)
-        axs[4].legend(loc='best', fontsize=14)
-
-        axs[5].plot(t_list, r_list, 'b', label='radius')
-        axs[5].set_xlabel(r'$t$', fontsize=14)
-        axs[5].set_ylabel(r'$value$', fontsize=14)
-        axs[5].set_title('plot of asteroid radius changes', fontsize=14)
-        axs[5].grid(True)
-        axs[5].legend(loc='best', fontsize=14)
-
-        axs[6].plot(t_list, e_list, 'b', label='energy')
-        axs[6].set_xlabel(r'$t$', fontsize=14)
-        axs[6].set_ylabel(r'$value$', fontsize=14)
-        axs[6].set_title('plot of asteroid energy changes', fontsize=14)
-        axs[6].grid(True)
-        axs[6].legend(loc='best', fontsize=14)
-
-        plt.show()
