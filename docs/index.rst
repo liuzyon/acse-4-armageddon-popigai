@@ -138,9 +138,68 @@ Table 1: Pressure thresholds (in kPa) for airblast damage
 Additional sections
 ~~~~~~~~~~~~~~~~~~~
 
-You should expand this documentation to include explanatory text for all components of your tool. 
+RK4 algorithm
+~~~~~~~~~~~~~~~~~~~
+The algorithm we use in solving the motion of asteroids in this project is the RK4 method, in which we approximate the value of
+:math:`y_n+1` using the following set of equations:
 
+.. math::
+   :nowrap:
 
+   \begin{aligned} 
+   y_{n+1} & = y_n + \frac{1}{6} \Delta t (k_1 + 2k_2 +2k_3 +k_4) \\
+   t_{n+1} & = t_n + \Delta t \\
+   \\
+   k_1 & = \Delta t f(t_n, y_n) \\
+   k_2 & = \Delta t f(t_n + \frac{\Delta t}{2}, y_n + \frac{k_1}{2}) \\
+   k_3 & = \Delta t f(t_n + \frac{\Delta t}{2}, y_n + \frac{k_2}{2}) \\
+   k_4 & = \Delta t f(t_n + \Delta t, y_n + k_3)
+   \end{aligned}
+
+while function :math:`f` is the set of ODE functions mentioned above in the part of Equations of motion. We use RK4 as our algorithm
+for the solver bacause it has a fourth order of convergence, making it a good choice when we change the time-stepping size.
+
+Derivation of analytical solution
+~~~~~~~~~~~~~~~~~~~
+
+Given that the simplifying assumptions of exponential atmosphere (:math:`\rho_a = \rho_0 e^{-z/H}`), 
+no gravitational acceleration (:math:`g=0`), a flat planet (:math:`R_p = \infty`), no lift (:math:`C_L = 0`), 
+no mass change owing to ablation (:math:`\frac{dm}{dt}=0`) and no fragmentation (:math:`\frac{dr}{dt}=0`), we can simplify the equation 
+of motion into the following set of ODEs:
+
+.. math::
+   :nowrap:
+
+   \begin{aligned} 
+   \frac{dv}{dt} & = \frac{-C_D\rho_0 A e^{-z/H} v^2}{2 m} \\
+   \frac{dm}{dt} & = 0 \\
+   \frac{d\theta}{dt} & = 0 \\
+   \frac{dz}{dt} & = -v\sin\theta \\
+   \frac{dx}{dt} & = v\cos\theta 
+   \end{aligned}
+
+What we are interested in here is the relationship between the velocity and the altitude, so by exchanging the varaible, we can obtain the following equation:
+
+.. math::
+   :nowrap:
+
+   \begin{aligned} 
+   \frac{dv}{dz} & = \frac{C_D\rho_0 A e^{-z/H} v}{2 m \sin\theta} 
+   \end{aligned}
+
+Integrate with respect to v in LHS and z in RHS:
+
+.. math::
+   :nowrap:
+
+   \begin{aligned} 
+   \ln(v) & = \frac{-C_D\rho_0 A H}{2 m \sin\theta} e^{-z/H} + Constant\\
+   \\
+   v & = Constant\, e^{\frac{-C_D\rho_0 A H}{2 m \sin\theta} e^{-z/H}}
+   \end{aligned}
+
+Plugging in the initial condition of :math:`z` (initial altitude) and :math:`v` (initial velocity), we can obtain a result for the constant 
+in the above equation as :math:`m` and :math:`\theta` are fixed numbers in this senario.
 
 Function API
 ============
