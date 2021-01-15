@@ -200,6 +200,10 @@ class PostcodeLocator(object):
         [[18, 18, 18, 18], [44, 44, 44]]
         >>> locator.get_population_of_postcode([['SW7  2']], True)
         [[2283]]
+        >>> locator.get_population_of_postcode([[]], True)
+        [[]]
+        >>> locator.get_population_of_postcode([], True)
+        []
         """
         census_df = pd.read_csv(self.census_file)
         postcodes_df = pd.read_csv(self.postcode_file)
@@ -208,7 +212,7 @@ class PostcodeLocator(object):
         if sector:
             # for sector
             # if sector input each does not have one extra space, such as 'SA8 3', eliminate extra space in census_df to unify the form.
-            if len(postcodes[0][0]) == 5:
+            if len(postcodes) > 0 and len(postcodes[0]) > 0 and len(postcodes[0][0]) == 5:
                 census_df['geography'] = census_df['geography'].str[:4] + census_df['geography'].str[5:]
 
             for level in postcodes:
