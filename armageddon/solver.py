@@ -367,7 +367,7 @@ class Planet():
                               ** 2).diff() / (result['altitude'] / 1000).diff()) / (4.184e12)
         return result
 
-    def analyse_outcome(self, result):
+    def analyse_outcome(self, result, rk=False):
         """
         Inspect a pre-found solution to calculate the impact and airburst stats
 
@@ -376,16 +376,19 @@ class Planet():
         result : DataFrame
             pandas dataframe with velocity, mass, angle, altitude, horizontal
             distance, radius and dedz as a function of time
+        rk: bool
+            indicator of where the call of this function from
 
         Returns
         -------
-        outcome : Dict
+        outcome : Dict, float
             dictionary with details of the impact event, which should contain
-            the key ``outcome`` (which should contain one of the following strings:
-            ``Airburst``, ``Cratering`` or ``Airburst and cratering``), as well as
+            the key `outcome` (which should contain one of the following strings:
+            `Airburst`, `Cratering` or `Airburst and cratering`), as well as
             the following keys:
-            ``burst_peak_dedz``, ``burst_altitude``, ``burst_distance``,
-             ``burst_energy``
+            `burst_peak_dedz`, `burst_altitude`, `burst_distance`, `burst_energy`
+
+            max dedz if this function is call from RK4 algorithm
         """
 
         outcome = {'outcome': 'Unknown',
@@ -396,8 +399,8 @@ class Planet():
 
         # get dedz column as a series
         dedz = result.loc[:, 'dedz']
-        if dedz.empty:
-            return outcome
+        if rk:
+            return dedz.max()
         outcome['burst_peak_dedz'] = dedz.max()
 
         # get the index of max dedz
@@ -410,8 +413,8 @@ class Planet():
 
         init_mass = result.loc[0, 'mass']
         init_velocity = result.loc[0, 'velocity']
-        init_KE = 1 / 2 * init_mass * init_velocity ** 2 / (4.184e12)
-        residual_KE = 1 / 2 * burst_mass * burst_velocity ** 2 / (4.184e12)
+        init_KE = 0.5 * init_mass * init_velocity**2 / 4.184e12
+        residual_KE = 0.5 * burst_mass * burst_velocity**2 / 4.184e12
         KE_loss = init_KE - residual_KE
 
         if burst_altitude > 5000:
