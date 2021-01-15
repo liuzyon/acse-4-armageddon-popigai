@@ -365,4 +365,3 @@ class Planet():
             else:
                 outcome['outcome'] = 'Airburst and cratering'
         return outcome
-
