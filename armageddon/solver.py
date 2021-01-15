@@ -158,7 +158,7 @@ class Planet():
                              'radius': vmtzxrs_Rk4[:-1, 5],
                              'time': t_all[:-1]})
 
-    def choose_dt0(self, dt, dp=3):
+    def choose_dt0(self, dt, dp=2):
         """
         Choose dt0 that dt is a multiple of it
         but not larger than pre-set value
