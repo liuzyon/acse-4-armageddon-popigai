@@ -39,7 +39,7 @@ def plot_circle(lat, lon, radius, level, map=None, **kwargs):
     return map
 
 
-def plot_results(entry_lat, entry_lon, blast_lat, blast_lon, radius_list, postcodes, population, sector=False):
+def plot_results(entry_lat, entry_lon, blast_lat, blast_lon, radius_list, postcodes=None, population=None, sector=False):
     """
     Plot all the results on a map.
 
@@ -95,36 +95,47 @@ def plot_results(entry_lat, entry_lon, blast_lat, blast_lon, radius_list, postco
     for i in range(len(radius_list)):
         map = plot_circle(blast_lat, blast_lon, radius_list[i], i+1, map)
 
-    # read the full_postcodes.csv
-    postcodes_df = pd.read_csv('./armageddon/resources/full_postcodes.csv')
+    if postcodes is not None:
+        # read the full_postcodes.csv
+        postcodes_df = pd.read_csv('./armageddon/resources/full_postcodes.csv')
 
-    if not sector:
-        # plot units
-        for i in range(len(postcodes)):
-            for j in range(len(postcodes[i])):
-                # unit postcode input no extra space, look up coordinate in full_postcodes.csv directly.
-                row_select = postcodes_df[postcodes_df['Postcode'] == postcodes[i][j]]
-                marker_lat = row_select.iloc[0]['Latitude']
-                marker_lon = row_select.iloc[0]['Longitude']
-                # plot the unit markers.
-                folium.Marker([marker_lat, marker_lon],
-                              popup='Unit:<br>' + postcodes[i][j] + '<br><br>All usual residents:<br>' + str(population[i][j]),
-                              tooltip="Click me!").add_to(map)
-    else:
-        # plot sector
-        for i in range(len(postcodes)):
-            for j in range(len(postcodes[i])):
-                # sector postcode input may has one extra space, eliminate it and look in full_postcodes.csv.
-                if len(postcodes[i][j]) == 6:
-                    postcodes[i][j] = postcodes[i][j][:4] + postcodes[i][j][5:]
-                units_in_sector = postcodes_df[postcodes_df['Postcode'].str.contains(postcodes[i][j])]
-                # calculate the sector coordinate(average of units coordinates) as the sector marker on the map
-                marker_lat = units_in_sector['Latitude'].mean()
-                marker_lon = units_in_sector['Longitude'].mean()
-                # plot the sector markers.
-                folium.Marker([marker_lat, marker_lon],
-                              popup='Sector:<br>' + postcodes[i][j] + '<br><br>All usual residents:<br>' + str(population[i][j]),
-                              tooltip="Click me!").add_to(map)
+        if not sector:
+            # plot units
+            for i in range(len(postcodes)):
+                for j in range(len(postcodes[i])):
+                    # unit postcode input no extra space, look up coordinate in full_postcodes.csv directly.
+                    row_select = postcodes_df[postcodes_df['Postcode'] == postcodes[i][j]]
+                    marker_lat = row_select.iloc[0]['Latitude']
+                    marker_lon = row_select.iloc[0]['Longitude']
+                    # plot the unit markers.
+                    if population is not None:
+                        folium.Marker([marker_lat, marker_lon],
+                                      popup='Unit:<br>' + postcodes[i][j] + '<br><br>All usual residents:<br>' + str(population[i][j]),
+                                      tooltip="Click me!").add_to(map)
+                    else:
+                        folium.Marker([marker_lat, marker_lon],
+                                      popup='Unit:<br>' + postcodes[i][j],
+                                      tooltip="Click me!").add_to(map)
+        else:
+            # plot sector
+            for i in range(len(postcodes)):
+                for j in range(len(postcodes[i])):
+                    # sector postcode input may has one extra space, eliminate it and look in full_postcodes.csv.
+                    if len(postcodes[i][j]) == 6:
+                        postcodes[i][j] = postcodes[i][j][:4] + postcodes[i][j][5:]
+                    units_in_sector = postcodes_df[postcodes_df['Postcode'].str.contains(postcodes[i][j])]
+                    # calculate the sector coordinate(average of units coordinates) as the sector marker on the map
+                    marker_lat = units_in_sector['Latitude'].mean()
+                    marker_lon = units_in_sector['Longitude'].mean()
+                    # plot the sector markers.
+                    if population is not None:
+                        folium.Marker([marker_lat, marker_lon],
+                                      popup='Sector:<br>' + postcodes[i][j] + '<br><br>All usual residents:<br>' + str(population[i][j]),
+                                      tooltip="Click me!").add_to(map)
+                    else:
+                        folium.Marker([marker_lat, marker_lon],
+                                      popup='Sector:<br>' + postcodes[i][j],
+                                      tooltip="Click me!").add_to(map)
     # save the map.
     map.save("index.html")
     return map
