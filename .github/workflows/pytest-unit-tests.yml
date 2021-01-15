@@ -21,11 +21,11 @@ jobs:
         pip install -r requirements.txt
         python ./download_data.py
 
-    - name: change to armageddon/
-      run: |
-        cd armageddon/
+    # - name: change to armageddon/
+    #   run: |
+    #     cd armageddon/
 
     # Run tests
     - name: run tests
       run: |
-        python -m pytest --doctest-modules *.py
+        python -m pytest --doctest-modules armageddon/*.py
